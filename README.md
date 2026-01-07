@@ -13,6 +13,7 @@ Microsoft Entra ID を中心に、**IaC（Terraform）→ ハイブリッドID�
 
 ## 全体像（視覚的サマリ）
 
+```mermaid
 flowchart LR
     AD[AD DS<br/>(vm-dc01)]
     Entra[Microsoft Entra ID]
