@@ -30,7 +30,7 @@ flowchart LR
     Entra --> Logs
     VNet --> Logs
     SaaS --> Logs
-
+```
 
 ---
 
