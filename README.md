@@ -21,10 +21,10 @@ flowchart LR
     SaaS[SaaS Applications<br/>Grafana / WordPress / ServiceNow]
     Logs[Log Analytics Workspace]
 
-    AD -- Cloud Sync --> Entra
+    AD -- "Cloud Sync" --> Entra
 
-    AD -- Bastion経由で運用 --> VNet
-    Entra -- SSO / SCIM / CA / PIM --> SaaS
+    AD -- "Bastion経由で運用" --> VNet
+    Entra -- "SSO / SCIM / CA / PIM" --> SaaS
 
     AD --> Logs
     Entra --> Logs
