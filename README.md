@@ -14,17 +14,45 @@ Microsoft Entra ID を中心に、**IaC（Terraform）→ ハイブリッドID�
 ## 全体像（視覚的サマリ）
 
 ```mermaid
+flowchart LR
 
-graph LR;
+%% ===== Local / On-Prem (simulated) =====
+subgraph ONPREM["On-Prem 相当"]
+  AD["AD DS (vm-dc01)<br/>AD DS / DNS"]
+end
 
-AD[AD DS (vm-dc01)] -->|Cloud Sync| Entra[Microsoft Entra ID]
-AD -->|Bastion経由で運用| VNet[Azure VNet (Private)]
-Entra -->|SSO / SCIM / CA / PIM| SaaS[SaaS Applications<br/>Grafana / WordPress / ServiceNow]
+%% ===== Azure (Private) =====
+subgraph AZ["Azure (Private Network)"]
+  VNET["Azure VNet (Private)"]
+  BASTION["Azure Bastion<br/>※RDP/SSHはBastion経由のみ"]
+  LAW["Log Analytics Workspace<br/>Sign-in / Audit / Provisioning / Bastion logs"]
+end
 
-AD --> Logs[Log Analytics Workspace]
-Entra --> Logs
-VNet --> Logs
-SaaS --> Logs
+%% ===== Entra =====
+subgraph ID["Microsoft Entra"]
+  ENTRA["Microsoft Entra ID<br/>SSO / SCIM / CA / PIM"]
+end
+
+%% ===== SaaS =====
+subgraph SAAS["SaaS"]
+  APPS["Grafana / WordPress / ServiceNow"]
+end
+
+%% ===== Flows =====
+AD -->|"Cloud Sync"| ENTRA
+BASTION -->|"Admin Access (RDP/SSH)"| AD
+
+ENTRA -->|"SSO / SCIM"| APPS
+
+AD -->|"Logs"| LAW
+ENTRA -->|"Sign-in / Audit / Provisioning"| LAW
+BASTION -->|"Bastion logs"| LAW
+APPS -->|"App logs (optional)"| LAW
+
+%% ===== Placement helpers (optional) =====
+VNET --- BASTION
+VNET --- AD
+VNET --- LAW
 
 ```
 
