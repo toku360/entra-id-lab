@@ -1,0 +1,24 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfplan
+crash.log
+
+# Secrets
+.env
+*.pem
+*.pfx
+*.key
+*secret*
+*password*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Evidence: allow screenshots/logs but avoid huge/binary dumps accidentally
+evidence/**/logs/*.zip
