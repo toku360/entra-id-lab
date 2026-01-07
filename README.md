@@ -15,21 +15,21 @@ Microsoft Entra ID を中心に、**IaC（Terraform）→ ハイブリッドID�
 
 ```mermaid
 flowchart LR
-    AD[AD DS<br/>(vm-dc01)]
-    Entra[Microsoft Entra ID]
-    VNet[Azure VNet<br/>(Private)]
-    SaaS[SaaS Applications<br/>Grafana / WordPress / ServiceNow]
-    Logs[Log Analytics Workspace]
+AD[AD DS<br/>(vm-dc01)]
+Entra[Microsoft Entra ID]
+VNet[Azure VNet<br/>(Private)]
+SaaS[SaaS Applications<br/>Grafana / WordPress / ServiceNow]
+Logs[Log Analytics Workspace]
 
-    AD -- "Cloud Sync" --> Entra
+AD -- "Cloud Sync" --> Entra
 
-    AD -- "Bastion経由で運用" --> VNet
-    Entra -- "SSO / SCIM / CA / PIM" --> SaaS
+AD -- "Bastion経由で運用" --> VNet
+Entra -- "SSO / SCIM / CA / PIM" --> SaaS
 
-    AD --> Logs
-    Entra --> Logs
-    VNet --> Logs
-    SaaS --> Logs
+AD --> Logs
+Entra --> Logs
+VNet --> Logs
+SaaS --> Logs
 ```
 
 ---
