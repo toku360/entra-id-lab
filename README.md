@@ -13,6 +13,22 @@ Microsoft Entra ID を中心に、**IaC（Terraform）→ ハイブリッドID�
 
 ## 全体像（視覚的サマリ）
 
+本アーキテクチャでは、オンプレミス相当の Active Directory（AD DS）を
+ID の起点とし、Microsoft Entra ID を中核に据えた
+ハイブリッド ID / SSO 基盤を構成している。
+
+管理アクセス（RDP / SSH）は Azure Bastion 経由に限定し、
+仮想マシンには Public IP を付与しない。
+
+ユーザー認証およびアクセス制御は Entra ID に集約し、
+SSO / SCIM / Conditional Access / PIM を用いて
+SaaS（Grafana / WordPress / ServiceNow）と連携する。
+
+サインインログ、監査ログ、プロビジョニングログ、
+Bastion 操作ログは Log Analytics Workspace に集約し、
+運用監視およびセキュリティ分析を可能としている。
+
+
 ```mermaid
 flowchart LR
 
