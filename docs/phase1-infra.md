@@ -34,5 +34,3 @@ flowchart LR
 
   NOTE1 --- VNET
   NOTE2 --- BAS
-
-
