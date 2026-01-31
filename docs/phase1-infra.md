@@ -34,3 +34,25 @@ flowchart LR
 
   NOTE1 --- VNET
   NOTE2 --- BAS
+```
+
+## 仮想マシンを Phase 1 で作成しない理由
+
+- Phase 1 は管理・監査・ネットワーク基盤の確立が目的
+- VM を先に作成すると、管理経路や証跡が未整備になる
+- Bastion + Log Analytics を先に構築し、
+  すべての管理操作を監査可能にしてから VM を追加する設計とした
+
+## ログ取得状況について
+
+- Phase 1 では AzureMetrics の取得を確認
+- AzureDiagnostics / AzureActivity は未取得
+- 理由：
+  - VM 未作成
+  - Bastion 接続イベント未発生
+  - Activity Log を LAW に送信していない
+- Phase 2 で VM 作成・Bastion 接続後に取得予定
+
+
+
+

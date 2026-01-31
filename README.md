@@ -79,9 +79,11 @@ VNET --- LAW
 - 何を解決する構成か / なぜこの技術選定か / 証跡の取り方を定義
 
 ### Phase 1（Week 1–2）：テナントと IaC 基盤構築
-- Entra テナント初期設定（Break-glass / 最小権限）
-- Terraform で RG/VNet/Subnet/LAW/Bastion を構築
-- Diagnostic Settings を LAW に送信して “監査証跡” を残す
+- Entra ID テナント初期設定
+- Terraform による RG / VNet / Bastion / Log Analytics 構築
+- 管理・監査基盤を先行構築（VM 未作成）
+- AzureMetrics による Log Analytics 動作確認
+- ログ未取得理由を設計として明文化
 
 ### Phase 2（Week 3–4）：ハイブリッド ID（Cloud Sync）
 - AD DS 構築、OU設計、属性マッピング設計
