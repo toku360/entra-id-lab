@@ -1,0 +1,93 @@
+[?2004h]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [7mecho "[INFO] logging to $LOG"[27mecho "[INFO] logging to $LOG"
+[?2004l[INFO] logging to evidence/phase2/logs/20260207_phase2_step2-2_bastion_rdp.log
+[?2004h]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ date
+[?2004lSat Feb  7 17:55:09 JST 2026
+[?2004h]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [7maz vm show -g rg-entra-id-lab -n vm-dc01 --query "{name:name, provisioningState:pro[27m[7mv[27m[7misioningState, location:location}" -o json[27m[A]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ az vm show -g rg-entra-id-lab -n vm-dc01 --query "{name:name, provisioningState:provisioningState, location:location}" -o json[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C
+
+[?2004l{
+  "location": "japaneast",
+  "name": "vm-dc01",
+  "provisioningState": "Succeeded"
+}
+[?2004h]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ 
+[?2004l[?2004h]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ 
+[?2004l[?2004h]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ 
+[?2004l[?2004h]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ 
+[?2004l[?2004h]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [7maz network bastion show -g rg-entra-id-lab -n bas-entra-id-lab --query "{name:name,[27m[7m [27m[7msku:sku.name, state:provisioningState}" -o json[27m[A]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ az network bastion show -g rg-entra-id-lab -n bas-entra-id-lab --query "{name:name, sku:sku.name, state:provisioningState}" -o json
+[?2004l{
+  "name": "bas-entra-id-lab",
+  "sku": "Standard",
+  "state": "Succeeded"
+}
+[?2004h]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [7mBASTION_ID="$(az network bastion show -g rg-entra-id-lab -n bas-entra-id-lab --quer[27m[7my[27m[7m id -o tsv)"[27m[A]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ BASTION_ID="$(az network bastion show -g rg-entra-id-lab -n bas-entra-id-lab --query id -o tsv)"
+[?2004l[?2004h]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [7maz monitor diagnostic-settings list --resource "$BASTION_ID" -o table[27m[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Caz monitor diagnostic-settings list --resource "$BASTION_ID" -o table
+[?2004lName                 ResourceGroup    WorkspaceId
+-------------------  ---------------  ------------------------------------------------------------------------------------------------------------------------------------------------------
+diag-bastion-to-law  rg-entra-id-lab  /subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.OperationalInsights/workspaces/law-entra-id-lab
+[?2004h]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [7mrg-entra-id-lab[27m[1Prg-entra-id-la[K[K[K[K[K[K[K[K[K[K[K[K[K[K[7maz monitor diagnostic-settings show --resource "$BASTION_ID" -n diag-bastion-to-law[27m[7m [27m[7m-o jsonc[27m[A]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ az monitor diagnostic-settings show --resource "$BASTION_ID" -n diag-bastion-to-law -o jsonc
+[?2004l{
+  "id": "/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourcegroups/rg-entra-id-lab/providers/microsoft.network/bastionhosts/bas-entra-id-lab/providers/microsoft.insights/diagnosticSettings/diag-bastion-to-law",
+  "logs": [
+    {
+      "category": "BastionAuditLogs",
+      "enabled": true,
+      "retentionPolicy": {
+        "days": 0,
+        "enabled": false
+      }
+    }
+  ],
+  "metrics": [
+    {
+      "category": "AllMetrics",
+      "enabled": true,
+      "retentionPolicy": {
+        "days": 0,
+        "enabled": false
+      }
+    }
+  ],
+  "name": "diag-bastion-to-law",
+  "resourceGroup": "rg-entra-id-lab",
+  "type": "Microsoft.Insights/diagnosticSettings",
+  "workspaceId": "/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.OperationalInsights/workspaces/law-entra-id-lab"
+}
+[?2004h]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [7mBASTION_ID="$(az network bastion show -g rg-entra-id-lab -n bas-entra-id-lab --quer[27m[7my[27m[7m id -o tsv)"[27m[A]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ BASTION_ID="$(az network bastion show -g rg-entra-id-lab -n bas-entra-id-lab --query id -o tsv)"
+[?2004l[?2004h]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [7maz monitor diagnostic-settings show --resource "$BASTION_ID" -n diag-bastion-to-law[27m[7m [27m[7m--query logAnalyticsDestinationType -o tsv[27m[A]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ az monitor diagnostic-settings show --resource "$BASTION_ID" -n diag-bastion-to-law --query logAnalyticsDestinationType -o tsv
+[?2004l[?2004h]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [7maz monitor diagnostic-settings show \[27m
+[7m  --resource "$BASTION_ID" \[27m
+[7m  -n diag-bastion-to-law \[27m
+[7m  --query "{name:name, workspaceId:workspaceId, logs:logs, metrics:metrics, ladt:logAnalyticsDestinationType}" \[27m
+[7m  -o jsonc[27m
+[A[A[A[A[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Caz monitor diagnostic-settings show \
+  --resource "$BASTION_ID" \
+  -n diag-bastion-to-law \
+  --query "{name:name, workspaceId:workspaceId, logs:logs, metrics:metrics, ladt:logAnalyticsDestinationType}" \
+  -o jsonc
+[A
+[?2004l{
+  "ladt": null,
+  "logs": [
+    {
+      "category": "BastionAuditLogs",
+      "enabled": true,
+      "retentionPolicy": {
+        "days": 0,
+        "enabled": false
+      }
+    }
+  ],
+  "metrics": [
+    {
+      "category": "AllMetrics",
+      "enabled": true,
+      "retentionPolicy": {
+        "days": 0,
+        "enabled": false
+      }
+    }
+  ],
+  "name": "diag-bastion-to-law",
+  "workspaceId": "/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.OperationalInsights/workspaces/law-entra-id-lab"
+}
+[?2004h]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [K]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [K]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [K]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [K]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [K]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [K]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [K]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [K]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [K]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [K]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [K]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [K]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [K]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [K]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [K]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [K]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [K]0;tokud@LAPTOP-B02HI6LF: ~/git/github/toku360/entra-id-lab[01;32mtokud@LAPTOP-B02HI6LF[00m:[01;34m~/git/github/toku360/entra-id-lab[00m$ [?2004l[?2004l

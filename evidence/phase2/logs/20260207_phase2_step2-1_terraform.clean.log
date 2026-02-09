@@ -1,0 +1,2566 @@
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab$ echo "[INFO] logging to $LOG"echo "[INFO] logging to $LOG"
+[INFO] logging to evidence/phase2/logs/20260207_phase2_step2-1_terraform.log
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab$ date
+Sat Feb  7 15:29:31 JST 2026
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab$ ls terraform/envs/lab/ad-infraterraform/envs/lab/ad-infra
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab$ las -la terraform/envs/lab/ad-infraterraform/envs/lab/ad-infra
+total 8
+drwxr-xr-x 2 tokud tokud 4096 Jan 31 16:31 .
+drwxr-xr-x 4 tokud tokud 4096 Jan 31 16:31 ..
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab$ cd terraform/envs/lab/ad-infraterraform/envs/lab/ad-infra
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ 
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ 
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ 
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ 
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ 
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ 
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ cat > versions.tf <<'EOF'
+terraform {
+  required_version = ">= 1.5.0"
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = ">= 3.100.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+}
+EOF
+cat > versions.tf <<'EOF'
+terraform {
+  required_version = ">= 1.5.0"
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = ">= 3.100.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+}
+EOF
+d terraform/envs/lab/ad-infra
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[4@ls -lacdcat > versions.tf <<'EOF'
+terraform {
+  required_version = ">= 1.5.0"
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = ">= 3.100.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+}
+EOF
+cat > versions.tf <<'EOF'
+terraform {
+  required_version = ">= 1.5.0"
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = ">= 3.100.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+}
+EOF
+
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ cat > variables.tf <<'EOF'
+variable "location" { type = string default = "japaneast" }
+
+# 既存リソース（Phase1）
+variable "rg_name"   { type = string default = "rg-entra-id-lab" }
+variable "vnet_name" { type = string default = "vnet-lab" }
+
+# Phase2 追加
+variable "ad_subnet_name" { type = string default = "snet-ad" }
+variable "ad_subnet_cidr" { type = string default = "10.10.2.0/24" }
+
+variable "vm_name"       { type = string default = "vm-dc01" }
+variable "vm_size"       { type = string default = "Standard_B2ms" } # 実務/コスト両立
+variable "admin_username" { type = string default = "adadmin" }
+
+# パスワードは tfvars で渡す（Gitに上げない）
+variable "admin_password" { type = string sensitive = true }
+
+# NSG：BastionSubnet からのみ RDP 許可（安全）
+# Phase1で Bastion を vnet-lab に置いていない場合があるため、
+# vnet-lab 内に "AzureBastionSubnet" が無い場合は Step2-1-4で検証して分岐する
+EOF
+cat > variables.tf <<'EOF'
+variable "location" { type = string default = "japaneast" }
+
+# 既存リソース（Phase1）
+variable "rg_name"   { type = string default = "rg-entra-id-lab" }
+variable "vnet_name" { type = string default = "vnet-lab" }
+
+# Phase2 追加
+variable "ad_subnet_name" { type = string default = "snet-ad" }
+variable "ad_subnet_cidr" { type = string default = "10.10.2.0/24" }
+
+variable "vm_name"       { type = string default = "vm-dc01" }
+variable "vm_size"       { type = string default = "Standard_B2ms" } # 実務/コスト両立
+variable "admin_username" { type = string default = "adadmin" }
+
+# パスワードは tfvars で渡す（Gitに上げない）
+variable "admin_password" { type = string sensitive = true }
+
+# NSG：BastionSubnet からのみ RDP 許可（安全）
+# Phase1で Bastion を vnet-lab に置いていない場合があるため、
+# vnet-lab 内に "AzureBastionSubnet" が無い場合は Step2-1-4で検証して分岐する
+EOF
+
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ cat > main.tf <<'EOF'
+# 既存RG/VNet取得
+data "azurerm_resource_group" "rg" {
+  name = var.rg_name
+}
+
+data "azurerm_virtual_network" "vnet" {
+  name                = var.vnet_name
+  resource_group_name = data.azurerm_resource_group.rg.name
+}
+
+# AD用Subnet（新規）
+resource "azurerm_subnet" "ad" {
+  name                 = var.ad_subnet_name
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+  address_prefixes     = [var.ad_subnet_cidr]
+}
+
+# BastionSubnet（既存の想定）を参照（存在しない場合は plan で落ちる→Step2-1-4で確認）
+data "azurerm_subnet" "bastion" {
+  name                 = "AzureBastionSubnet"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+}
+
+# NSG（RDPは BastionSubnet のみ許可）
+resource "azurerm_network_security_group" "nsg" {
+  name                = "nsg-${var.vm_name}"  location            = data.azurerm_resource_group.rg.location  resource_group_name = data.azurerm_resource_group.rg.name  security_rule {    name                       = "Allow-RDP-From-BastionSubnet"    priority                   = 100    direction                  = "Inbound"    access                     = "Allow"    protocol                   = "Tcp"    source_port_range          = "*"    destination_port_range     = "3389"    source_address_prefix      = data.azurerm_subnet.bastion.address_prefixes[0]    destination_address_prefix = "*"  }  security_rule {    name                       = "Deny-All-Inbound"    priority                   = 4096    direction                  = "Inbound"    access                     = "Deny"    protocol                   = "*"    source_port_range          = "*"    destination_port_range     = "*"    source_address_prefix      = "*"    destination_address_prefix = "*"  }}# NIC（Privateのみ）resource "azurerm_network_interface" "nic" {  name                = "nic-${var.vm_name}"  location            = data.azurerm_resource_group.rg.location  resource_group_name = data.azurerm_resource_group.rg.name  ip_configuration {    name                          = "ipconfig1"    subnet_id                     = azurerm_subnet.ad.id    private_ip_address_allocation = "Dynamic"  }}# NIC にNSG紐付けresource "azurerm_network_interface_security_group_association" "assoc" {  network_interface_id      = azurerm_network_interface.nic.id  network_security_group_id = azurerm_network_security_group.nsg.id}# Windows Server 2022 VMresource "azurerm_windows_virtual_machine" "vm" {  name                = var.vm_name  location            = data.azurerm_resource_group.rg.location  resource_group_name = data.azurerm_resource_group.rg.name  size                = var.vm_size  admin_username      = var.admin_username  admin_password      = var.admin_password  network_interface_ids = [azurerm_network_interface.nic.id]  os_disk {    caching              = "ReadWrite"    storage_account_type = "StandardSSD_LRS"  }  source_image_reference {    publisher = "MicrosoftWindowsServer"    offer     = "WindowsServer"    sku       = "2022-datacenter-azure-edition"    version   = "latest"  }}EOF  network_security_group_id = azurerm_network_security_group.nsg.id}# Windows Server 2022 VMresource "azurerm_windows_virtual_machine" "vm" {  name                = var.vm_name  location            = data.azurerm_resource_group.rg.location  resource_group_name = data.azurerm_resource_group.rg.name  size                = var.vm_size  admin_username      = var.admin_username  admin_password      = var.admin_password  network_interface_ids = [azurerm_network_interface.nic.id]  os_disk {    caching              = "ReadWrite"    storage_account_type = "StandardSSD_LRS"  }  source_image_reference {    publisher = "MicrosoftWindowsServer"    offer     = "WindowsServer"    sku       = "2022-datacenter-azure-edition"    version   = "latest"  }}EOF[5@variables
+variable "location" { type = string default = "japaneast" }
+                                    
+# 既存リソース（Phase1）
+variable "rg_name"   { type = string default = "rg-entra-id-lab" }
+variable "vnet_name" { type = string default = "vnet-lab" }
+                                       
+# Phase2 追加
+variable "ad_subnet_name" { type = string default = "snet-ad" }
+variable "ad_subnet_cidr" { type = string default = "10.10.2.0/24" }
+
+variable "vm_name"       { type = string default = "vm-dc01" }
+variable "vm_size"       { type = string default = "Standard_B2ms" } # 実務/コスト両立
+variable "admin_username" { type = string default = "adadmin" }
+                                                            
+# パスワードは tfvars で渡す（Gitに上げない）
+variable "admin_password" { type = string sensitive = true }
+ 
+# NSG：BastionSubnet からのみ RDP 許可（安全）
+Phase1で Bastion を vnet-lab に置いていない場合があるため、
+# vnet-lab 内に "AzureBastionSubnet" が無い場合は Step2-1-4で検証して分岐する
+EOF                                          
+
+
+
+
+
+
+main
+# 既存RG/VNet取得                                          
+data "azurerm_resource_group" "rg" {
+  name = var.rg_name
+}                                                                 
+                                                           
+data "azurerm_virtual_network" "vnet" {
+  name                = var.vnet_name
+  resource_group_name = data.azurerm_resource_group.rg.name
+}                                                                   
+
+# AD用Subnet（新規）                                          
+resource "azurerm_subnet" "ad" {
+  name                 = var.ad_subnet_name
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+  address_prefixes     = [var.ad_subnet_cidr]
+}
+                                              
+BastionSubnet（既存の想定）を参照（存在しない場合は plan で落ちる→Step2-1-4で確認）
+data "azurerm_subnet" "bastion" {
+  name                 = "AzureBastionSubnet"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+}
+
+# NSG（RDPは BastionSubnet のみ許可）
+resource "azurerm_network_security_group" "nsg" {
+  name                = "nsg-${var.vm_name}"  location            = data.azurerm_resource_group.rg.location  resource_group_name = data.azurerm_resource_group.rg.name  security_rule {    name                       = "Allow-RDP-From-BastionSubnet"    priority                   = 100    direction                  = "Inbound"    access                     = "Allow"    protocol                   = "Tcp"    source_port_range          = "*"    destination_port_range     = "3389"    source_address_prefix      = data.azurerm_subnet.bastion.address_prefixes[0]    destination_address_prefix = "*"  }  security_rule {    name                       = "Deny-All-Inbound"    priority                   = 4096    direction                  = "Inbound"    access                     = "Deny"    protocol                   = "*"    source_port_range          = "*"    destination_port_range     = "*"    source_address_prefix      = "*"    destination_address_prefix = "*"  }}# NIC（Privateのみ）resource "azurerm_network_interface" "nic" {  name                = "nic-${var.vm_name}"  location            = data.azurerm_resource_group.rg.location  resource_group_name = data.azurerm_resource_group.rg.name  ip_configuration {    name                          = "ipconfig1"    subnet_id                     = azurerm_subnet.ad.id    private_ip_address_allocation = "Dynamic"  }}# NIC にNSG紐付けresource "azurerm_network_interface_security_group_association" "assoc" {  network_interface_id      = azurerm_network_interface.nic.id  network_security_group_id = azurerm_network_security_group.nsg.id}# Windows Server 2022 VMresource "azurerm_windows_virtual_machine" "vm" {  name                = var.vm_name  location            = data.azurerm_resource_group.rg.location  resource_group_name = data.azurerm_resource_group.rg.name  size                = var.vm_size  admin_username      = var.admin_username  admin_password      = var.admin_password  network_interface_ids = [azurerm_network_interface.nic.id]  os_disk {    caching              = "ReadWrite"    storage_account_type = "StandardSSD_LRS"  }  source_image_reference {    publisher = "MicrosoftWindowsServer"    offer     = "WindowsServer"    sku       = "2022-datacenter-azure-edition"    version   = "latest"  }}EOF[5@variables
+variable "location" { type = string default = "japaneast" }
+                                    
+# 既存リソース（Phase1）
+variable "rg_name"   { type = string default = "rg-entra-id-lab" }
+variable "vnet_name" { type = string default = "vnet-lab" }
+                                       
+# Phase2 追加
+variable "ad_subnet_name" { type = string default = "snet-ad" }
+variable "ad_subnet_cidr" { type = string default = "10.10.2.0/24" }
+
+variable "vm_name"       { type = string default = "vm-dc01" }
+variable "vm_size"       { type = string default = "Standard_B2ms" } # 実務/コスト両立
+variable "admin_username" { type = string default = "adadmin" }
+                                                            
+# パスワードは tfvars で渡す（Gitに上げない）
+variable "admin_password" { type = string sensitive = true }
+ 
+# NSG：BastionSubnet からのみ RDP 許可（安全）
+Phase1で Bastion を vnet-lab に置いていない場合があるため、
+# vnet-lab 内に "AzureBastionSubnet" が無い場合は Step2-1-4で検証して分岐する
+EOF                                          
+
+
+
+
+
+
+ersion
+terraform {                                                
+  required_version = ">= 1.5.0"
+  required_providers {
+    azurerm = {                                                   
+      source  = "hashicorp/azurerm"
+      version = ">= 3.100.0"
+    }
+  }                                                            
+}                                                                   
+
+provider "azurerm" {                                          
+  features {}                                                                         
+}                                                              
+EOF
+
+
+
+
+
+
+
+d terraform/envs/lab/ad-infra
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[4@ls -laterraform/envs/lab/ad-infradateecho "[INFO] logging to $LOG"xec > >(tee -a "$LOG") 2>&1LOG="evidence/phase2/logs/$(date +%Y%m%d)_phase2_step2-1_terraform.log"tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ ls -la evidence/phase2/logs evidence/phase2/screenshotstokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ 
+cat > main.tf <<'EOF'
+# 既存RG/VNet取得
+data "azurerm_resource_group" "rg" {
+  name = var.rg_name
+}
+
+data "azurerm_virtual_network" "vnet" {
+  name                = var.vnet_name
+  resource_group_name = data.azurerm_resource_group.rg.name
+}
+
+# AD用Subnet（新規）
+resource "azurerm_subnet" "ad" {
+  name                 = var.ad_subnet_name
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+  address_prefixes     = [var.ad_subnet_cidr]
+}
+
+# BastionSubnet（既存の想定）を参照（存在しない場合は plan で落ちる→Step2-1-4で確認）
+data "azurerm_subnet" "bastion" {
+  name                 = "AzureBastionSubnet"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+}
+
+# NSG（RDPは BastionSubnet のみ許可）
+resource "azurerm_network_security_group" "nsg" {
+  name                = "nsg-${var.vm_name}"  location            = data.azurerm_resource_group.rg.location  resource_group_name = data.azurerm_resource_group.rg.name  security_rule {    name                       = "Allow-RDP-From-BastionSubnet"    priority                   = 100    direction                  = "Inbound"    access                     = "Allow"    protocol                   = "Tcp"    source_port_range          = "*"    destination_port_range     = "3389"    source_address_prefix      = data.azurerm_subnet.bastion.address_prefixes[0]    destination_address_prefix = "*"  }  security_rule {    name                       = "Deny-All-Inbound"    priority                   = 4096    direction                  = "Inbound"    access                     = "Deny"    protocol                   = "*"    source_port_range          = "*"    destination_port_range     = "*"    source_address_prefix      = "*"    destination_address_prefix = "*"  }}# NIC（Privateのみ）resource "azurerm_network_interface" "nic" {  name                = "nic-${var.vm_name}"  location            = data.azurerm_resource_group.rg.location  resource_group_name = data.azurerm_resource_group.rg.name  ip_configuration {    name                          = "ipconfig1"    subnet_id                     = azurerm_subnet.ad.id    private_ip_address_allocation = "Dynamic"  }}# NIC にNSG紐付けresource "azurerm_network_interface_security_group_association" "assoc" {  network_interface_id      = azurerm_network_interface.nic.id  network_security_group_id = azurerm_network_security_group.nsg.id}# Windows Server 2022 VMresource "azurerm_windows_virtual_machine" "vm" {  name                = var.vm_name  location            = data.azurerm_resource_group.rg.location  resource_group_name = data.azurerm_resource_group.rg.name  size                = var.vm_size  admin_username      = var.admin_username  admin_password      = var.admin_password  network_interface_ids = [azurerm_network_interface.nic.id]  os_disk {    caching              = "ReadWrite"    storage_account_type = "StandardSSD_LRS"  }  source_image_reference {    publisher = "MicrosoftWindowsServer"    offer     = "WindowsServer"    sku       = "2022-datacenter-azure-edition"    version   = "latest"  }}EOF  network_security_group_id = azurerm_network_security_group.nsg.id}# Windows Server 2022 VMresource "azurerm_windows_virtual_machine" "vm" {  name                = var.vm_name  location            = data.azurerm_resource_group.rg.location  resource_group_name = data.azurerm_resource_group.rg.name  size                = var.vm_size  admin_username      = var.admin_username  admin_password      = var.admin_password  network_interface_ids = [azurerm_network_interface.nic.id]  os_disk {    caching              = "ReadWrite"    storage_account_type = "StandardSSD_LRS"  }  source_image_reference {    publisher = "MicrosoftWindowsServer"    offer     = "WindowsServer"    sku       = "2022-datacenter-azure-edition"    version   = "latest"  }}EOF
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ 
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ 
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ 
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ ls -la
+total 20
+drwxr-xr-x 2 tokud tokud 4096 Feb  7 15:36 .
+drwxr-xr-x 4 tokud tokud 4096 Jan 31 16:31 ..
+-rw-r--r-- 1 tokud tokud 3263 Feb  7 15:36 main.tf
+-rw-r--r-- 1 tokud tokud  950 Feb  7 15:33 variables.tf
+-rw-r--r-- 1 tokud tokud  198 Feb  7 15:32 versions.tf
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ vi main.tf
+Vim: Warning: Output is not to a terminal
+[>4;2m="main.tf" 98L, 3263B# 既存RG/VNet取得
+data "azurerm_resource_group" "rg" {
+  name = var.rg_name
+}
+
+data "azurerm_virtual_network" "vnet" {
+  name= var.vnet_name
+  resource_group_name = data.azurerm_resource_group.rg.name
+}
+
+# AD用Subnet（新規）
+resource "azurerm_subnet" "ad" {
+  name= var.ad_subnet_name
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+  address_prefixes     = [var.ad_subnet_cidr]
+}
+
+# BastionSubnet（既存の想定）を参照（存在しない場合は plan で落ちる→Step2-1-4で確認）
+data "azurerm_subnet" "bastion" {
+  name= "AzureBastionSubnet"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+}
+
+# NSG（RDPは BastionSubnet のみ許可）
+resource "azurerm_network_security_group" "nsg" {1,1Top~@k   2~@k   3~@k   {
+
+}4~@k   {
+
+}5,0-1~@k   6,1  ~@k   7~@k   8~@k   {
+
+
+}9~@k   {
+
+
+}10,0-1~@k   1,1  ~@k   2~@k   3~@k   4~@k   5~@k   6~@k   {}7~@k   {}8,0-1~@k   9,1  ~@k   20~@k   1~@k   2~@k   
+name= "nsg-${var.vm_name}"23,11%~@k   
+{}location= data.azurerm_resource_group.rg.location24,12%~@k   
+{}resource_group_name = data.azurerm_resource_group.rg.name25,0-14%~@k   
+26,15%~@k   
+security_rule {27,17%~@k   
+name= "Allow-RDP-From-BastionSubnet"28,18%~@k   
+priority= 10029,19%~@k   
+direction= "Inbound"30,111%~@k   
+access= "Allow"31,0-112%~@k   
+protocol= "Tcp"32,114%~@k   
+source_port_range= "*"33,115%~@k   
+destination_port_range     = "3389"34,116%~@k   
+source_address_prefix      = data.azurerm_subnet.bastion.address_prefixes[0]35,118%~@k   
+destination_address_prefix = "*"36,119%~@k   
+}37,121%~@k   
+38,122%~@k   
+security_rule {39,123%~@k   
+name= "Deny-All-Inbound"40,125%~@k   
+priority= 409641,126%~@k   
+direction= "Inbound"42,128%~@k   
+access= "Deny"43,0-129%~@k   
+protocol= "*"44,130%~@k   
+source_port_range= "*"45,132%~@k   
+destination_port_range     = "*"46,133%~@k   
+source_address_prefix      = "*"47,135%~@k   
+destination_address_prefix = "*"48,136%~@k   
+}49,138%~@k   
+}50,139%~@k   
+51,140%~@k   
+# NIC（Privateのみ）52,142%~@k   
+resource "azurerm_network_interface" "nic" {53,143%~@k   
+name= "nic-${var.vm_name}"54,145%~@k   
+location= data.azurerm_resource_group.rg.location55,146%~@k   
+resource_group_name = data.azurerm_resource_group.rg.name56,0-147%~@k   
+57,149%~@k   
+ip_configuration {58,150%~@k   
+name= "ipconfig1"59,152%~@k   
+subnet_id= azurerm_subnet.ad.id60,153%~@k   
+private_ip_address_allocation = "Dynamic"61,154%~@k   
+}62,0-156%~@k   
+}63,157%~@k   
+64,159%~@k   
+# NIC にNSG紐付け65,160%~@k   
+resource "azurerm_network_interface_security_group_association" "assoc" {66,161%~@k   
+network_interface_id      = azurerm_network_interface.nic.id67,163%~@k   
+{}network_security_group_id = azurerm_network_security_group.nsg.id68,164%~@k   
+{}}69,0-166%~@k   
+70,167%~@k   
+# Windows Server 2022 VM71,169%~@k   
+resource "azurerm_windows_virtual_machine" "vm" {72,170%~@k   
+name= var.vm_name73,171%~@k   
+{
+
+
+}location= data.azurerm_resource_group.rg.location74,173%~@k   
+{
+
+
+}resource_group_name = data.azurerm_resource_group.rg.name75,0-174%~@k   
+size= var.vm_size76,176%~@k   
+admin_username      = var.admin_username77,177%~@k   
+admin_password      = var.admin_password78,178%~@k   
+79,180%~@k   
+network_interface_ids = [azurerm_network_interface.nic.id]80,181%~@k   
+81,183%~@k   
+os_disk {82,184%~@k   
+caching= "ReadWrite"83,185%~@k   
+storage_account_type = "StandardSSD_LRS"84,0-187%~@k   
+}85,188%~@k   
+86,0-190%~@k   
+source_image_reference {87,191%~@k   
+publisher = "MicrosoftWindowsServer"88,192%~@k   
+offer     = "WindowsServer"89,194%~@k   
+sku= "2022-datacenter-azure-edition"90,195%~@k   
+version   = "latest"91,0-197%~@k   
+}92,198%~@k   
+}93,1Bot~@k   4~@k   5~@k   6~@k   7~@k   {}8~@k   ~@k   ~@k   ~@k   ~@k   ~@k   ~@k   ~@k   ~@k   ~@k   ~@k   ~@k   ~@k   ::q[>4;m>[>4;mtokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ cat > outputs.tf <<'EOF'
+output "vm_id" {
+  value = azurerm_windows_virtual_machine.vm.id
+}
+
+output "vm_private_ip" {
+  value = azurerm_network_interface.nic.private_ip_address
+}
+
+output "ad_subnet_id" {
+  value = azurerm_subnet.ad.id
+}
+EOF
+cat > outputs.tf <<'EOF'
+output "vm_id" {
+  value = azurerm_windows_virtual_machine.vm.id
+}
+
+output "vm_private_ip" {
+  value = azurerm_network_interface.nic.private_ip_address
+}
+
+output "ad_subnet_id" {
+  value = azurerm_subnet.ad.id
+}
+EOF
+
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ cat > terraform.tfvars <<'EOF'
+admin_password = "REPLACE_ME"
+EOF
+cat > terraform.tfvars <<'EOF'
+admin_password = "REPLACE_ME"
+EOF
+
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ vi terraform.tfvarsvi terraform.tfvars
+Vim: Warning: Output is not to a terminal
+[>4;2m="terraform.tfvars" 1L, 30Badmin_password = "REPLACE_ME"
+~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       ~                                                                                                                       1,1All~@k   2~@k   3~@k   4~@k   5~@k   6~@k   7~@k   8~@k   9~@k   10~@k   1~@k   2~@k   3~@k   4~@k   5~@k   6~@k   7~@k   8~@k   9~@k   20~@k   1~@k   2~@k   3~@k   4~@k   5~@k   6~@k   7~@k   8i -- INSERT --1,28All9"8"7"6"5"4"3"2"1"0"19m"20s"1"0a"1s"2a"3k"4i"53"62"75"8@"9p"30o"1i"2"1"0"29"8p"9o"30i"1^[  1,30All::wq[>4;m"terraform.tfvars" 1L, 32B written
+>[>4;mtokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ az network vnet subnet list -g rg-entra-id-lab --vnet-name vnet-lab -o tabletokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ az network vnet subnet list -g rg-entra-id-lab --vnet-name vnet-lab -o table
+AddressPrefix    DefaultOutboundAccess    Name                PrivateEndpointNetworkPolicies    PrivateLinkServiceNetworkPolicies    ProvisioningState    ResourceGroup
+---------------  -----------------------  ------------------  --------------------------------  -----------------------------------  -------------------  ---------------
+10.10.1.0/24     True                     subnet-lab          Disabled                          Enabled                              Succeeded            rg-entra-id-lab
+10.10.2.0/26     True                     AzureBastionSubnet  Disabled                          Enabled                              Succeeded            rg-entra-id-lab
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ 
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ 
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ terraform initterraform init
+Initializing the backend...
+╷
+│ Error: Terraform encountered problems during initialisation, including problems
+│ with the configuration, described below.
+│ 
+│ The Terraform configuration must be valid before initialization so that
+│ Terraform can determine which modules and providers need to be installed.
+│ 
+│ 
+╵
+╷
+│ Error: Invalid single-argument block definition
+│ 
+│   on variables.tf line 1, in variable "location":
+│    1: variable "location" { type = string default = "japaneast" }
+│ 
+│ A single-line block definition must end with a closing brace immediately
+│ after its single argument definition.
+╵
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ vi variables.tfvariables.tf
+Vim: Warning: Output is not to a terminal
+[>4;2m="variables.tf" 20L, 950Bvariable "location" { type = string default = "japaneast" }
+
+# 既存リソース（Phase1）
+variable "rg_name"   { type = string default = "rg-entra-id-lab" }
+variable "vnet_name" { type = string default = "vnet-lab" }
+
+# Phase2 追加
+variable "ad_subnet_name" { type = string default = "snet-ad" }
+variable "ad_subnet_cidr" { type = string default = "10.10.2.0/24" }
+
+variable "vm_name"{ type = string default = "vm-dc01" }
+variable "vm_size"{ type = string default = "Standard_B2ms" } # 実務/コスト両立
+variable "admin_username" { type = string default = "adadmin" }
+
+# パスワードは tfvars で渡す（Gitに上げない）
+variable "admin_password" { type = string sensitive = true }
+
+# NSG：BastionSubnet からのみ RDP 許可（安全）
+# Phase1で Bastion を vnet-lab に置いていない場合があるため、
+# vnet-lab 内に "AzureBastionSubnet" が無い場合は Step2-1-4で検証して分岐する
+~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 1,1All~@k   ~@k   2,0-1~@k   3,1  ~@k   4i -- INSERT --4,1All56787654321234567891012345678920 {}12{}345678930123454321029876543type = string default = "japaneast" }2,1All        type = string default = "japaneast" }2-93,1  2,2-93-104-115-126-137-148-159-1610-171-182-193-204-215-226-23default = "japaneast" }5-22default = "japaneast" }3,1All        default = "japaneast" }2-93-104-115-126-137-148-159-1610-171-182-193-204-215-226-237-248-259-2620-271-282-293-30{}4-31}3-30   }4-33}3-30 }4-31}4,1All{
+
+
+}5{
+
+
+}4{
+
+
+}5672345678910123456789201 {}23{}4type = string default = "rg-entra-id-lab" }8,1All        type = string default = "rg-entra-id-lab" }2-93-104-115-126-137-148-159-1610-171-182-193-204-215-226-237-248-257-246-23default = "rg-entra-id-lab" }5-22default = "rg-entra-id-lab" }9,1All        default = "rg-entra-id-lab" }2-9        default = "rg-entra-id-lab" }3-17default = "rg-entra-id-lab" }2-9 3-104-115-126-137-148-159-1610-171-182-193-204-215-226-237-248-259-2620-271-282-293-304-315-326-337-348-359-36{}30-37}10,1All{
+
+
+}9,1 89{
+
+
+}10,1{
+
+
+}12345678910123456789201 {}23{}4type = string default = "vnet-lab" }12,1All        type = string default = "vnet-lab" }2-93-104-115-126-137-148-159-1610-171-182-193-204-215-226-23default = "vnet-lab" }13,1Top        default = "vnet-lab" }2-93-104-115-126-137-148-159-1610-171-182-193-204-215-226-237-248-259-2620-271-282-29{}3-30}14,1Top{
+
+
+}567234567891012345678920123456 {}78{}9type = string default = "snet-ad" }18,1Top        type = string default = "snet-ad" }2-93-104-115-126-137-148-159-1610-171-182-193-204-215-226-23default = "snet-ad" }19,1Top        default = "snet-ad" }2-93-104-115-126-137-148-159-1610-171-182-193-204-215-226-237-248-259-2620-271-28{}2-29}20,1Top{
+
+
+}1234567891012345678920123456 {}78{}9type = string default = "10.10.2.0/24" }22,1Top2321        type = string default = "10.10.2.0/24" }2-93-104-115-126-137-148-159-1610-171-182-193-204-215-226-23
+default = "10.10.2.0/24" }23,114%        default = "10.10.2.0/24" }2-93-104-115-126-137-148-159-1610-171-182-193-204-215-226-237-248-259-2620-271-282-293-304-315-326-33{}7-34
+}24,125%
+{
+
+
+}# パスワードは tfvars で渡す（Gitに上げない）25,137%
+variable "admin_password" { type = string sensitive = true }26,150%
+27,162%
+# NSG：BastionSubnet からのみ RDP 許可（安全）28,175%
+# Phase1で Bastion を vnet-lab に置いていない場合があるため、29,187%
+# vnet-lab 内に "AzureBastionSubnet" が無い場合は Step2-1-4で検証して分岐する30,1Bot1234543210298765623456789101234567892012345{ type = string default = "vm-dc01" }4{ type = string default = "vm-dc01" }3{ type = string default = "vm-dc01" }2{ type = string default = "vm-dc01" }1{ type = string default = "vm-dc01" }0{ type = string default = "vm-dc01" }1972012345{ type = string default = "Standard_B2ms" } # 実務/コスト両立 4{ type = string default = "Standard_B2ms" } # 実務/コスト両立 3{ type = string default = "Standard_B2ms" } # 実務/コスト両立 2{ type = string default = "Standard_B2ms" } # 実務/コスト両立 1{ type = string default = "Standard_B2ms" } # 実務/コスト両立 0{ type = string default = "Standard_B2ms" } # 実務/コスト両立 19 {}201{}26type = string default = "vm-dc01" }27,188%        type = string default = "vm-dc01" }2-93-104-115-126-137-148-159-1610-171-182-193-204-215-226-23default = "vm-dc01" }28,180%        default = "vm-dc01" }2-93-104-115-126-137-148-159-1610-171-182-193-204-215-226-237-248-259-2620-271-28{}2-29}29,172%{
+
+
+}302345678910123456789 {}201{}2
+type = string default = "Standard_B2ms" } # 実務/コスト両立31,175%        type = string default = "Standard_B2ms" } # 実務/コスト両立2-93-104-115-126-137-148-159-1610-171-182-193-204-215-226-23
+default = "Standard_B2ms" } # 実務/コスト両立32,176%        default = "Standard_B2ms" } # 実務/コスト両立2-93-104-115-126-137-148-159-1610-171-182-193-204-215-226-237-248-259-2620-271-282-293-304-315-326-337-34{}8-35
+} # 実務/コスト両立33,178%2{
+
+
+}34
+# NSG：BastionSubnet からのみ RDP 許可（安全）34,485%321
+variable "admin_username" { type = string default = "adadmin" }35,186%4{
+
+
+}3{
+
+
+}210{
+
+
+}29{
+
+
+}8765{
+
+
+}4{
+
+
+}321variable "ad_subnet_cidr" {22,181%34{
+
+
+}5{
+
+
+}6789{
+
+
+}30{
+
+
+}121variable "vm_size" {32,176%34{
+
+
+}5
+{
+
+
+}36,182%{
+
+
+}52{
+
+
+}3458-711-92-105-128-1421-164-187-204-181-1618-145-122-101-9 8-7 5  43{
+
+
+}2{
+
+
+}6,1
+# NSG：BastionSubnet からのみ RDP 許可（安全）37,288%34567891012345678920123456 {}78{}9
+type = string default = "adadmin" }38,188%        type = string default = "adadmin" }2-93-104-115-126-137-148-159-1610-171-182-193-204-215-226-23
+default = "adadmin" }39,189%        default = "adadmin" }2-93-104-115-126-137-148-159-1610-171-182-193-204-215-226-237-248-259-2620-271-28{}2-29
+}40,190%
+{
+
+
+}# Phase1で Bastion を vnet-lab に置いていない場合があるため、41,195%
+# vnet-lab 内に "AzureBastionSubnet" が無い場合は Step2-1-4で検証して分岐する42,1Bot343234567891012345678920123456 {}78{}9
+type = string sensitive = true }44,1Bot        type = string sensitive = true }2-93-104-115-126-137-148-159-1610-171-182-193-204-215-226-23
+sensitive = true }45,1Bot        sensitive = true }2-93-104-115-126-137-148-159-1610-171-182-193-204-215-226-237-248-25{}9-26
+}46,1Bot{
+
+
+}78950^[  50,1Bot::wq[>4;m"variables.tf" 50L, 959B written
+>[>4;mtokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ vi variables.tf
+Vim: Warning: Output is not to a terminal
+[>4;2m="variables.tf" 50L, 959Bdefault = "10.10.2.0/24"
+}
+
+variable "vm_name" {type = stringdefault = "vm-dc01"
+}
+
+variable "vm_size" {type = stringdefault = "Standard_B2ms"
+}
+
+variable "admin_username" {type = stringdefault = "adadmin"
+}
+
+# パスワードは tfvars で渡す（Gitに上げない）
+variable "admin_password" {type = stringsensitive = true
+}
+
+# NSG：BastionSubnet からのみ RDP 許可（安全）
+# Phase1で Bastion を vnet-lab に置いていない場合があるため、
+# vnet-lab 内に "AzureBastionSubnet" が無い場合は Step2-1-4で検証して分岐する50,1Bot~@k   49~@k   50~@k   ~@k   ~@k   ~@k   49~@k   8~@k   7,0-1~@k   {
+
+
+}6,1  ~@k   {
+
+
+}5,1-8~@k   4~@k   3,1  ~@k   2~@k   1,0-1~@k   {
+
+
+}0,1  ~@k   {
+
+
+}39,1-8~@k   8~@k   7,1  ~@k   6,0-1~@k   {
+
+
+}5,1  ~@k   {
+
+
+}4,1-8~@k   3~@k   2,1  ~@k   1,0-1~@k   {
+
+
+}0,1  ~@k   {
+
+
+}29,1-8~@k   type = string28,1-895%~@k   variable "ad_subnet_cidr" {27,191%~@k   26,0-186%~@k   }{
+
+
+}25,182%~@k   default = "snet-ad"{
+
+
+}24,1-878%~@k   type = string23,1-873%~@k   variable "ad_subnet_name" {22,169%~@k   # Phase2 追加21,0-165%~@k   {
+
+
+}20,160%~@k   }{
+
+
+}19,1-856%~@k   default = "vnet-lab"18,1-852%~@k   type = string17,147%~@k   variable "vnet_name" {16,143%~@k   }15,0-139%~@k   default = "rg-entra-id-lab"{
+
+
+}14,134%~@k   type = string{
+
+
+}13,1-830%~@k   variable "rg_name"   {12,1-826%~@k   # 既存リソース（Phase1）11,121%~@k   {
+
+
+}10,117%~@k   }{
+
+
+}9,1-813%~@k   default = "japaneast"8,1-88%~@k   type = string7,14%~@k   variable "location" {6,1Top~@k   5,0-1~@k   {
+
+
+}4,1  ~@k   {
+
+
+}3,1-8~@k   2~@k   1,1  ~@k   ~@k   ~@k   ~@k   ~@k   ~@k   ~@k   2,1-8~@k   3~@k   {
+
+
+}4,1  ~@k   {
+
+
+}5,0-1~@k   6,1  ~@k   7::q[>4;m>[>4;mtokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ vi variables.tfterraform init
+Initializing the backend...
+Initializing provider plugins...
+- Finding hashicorp/azurerm versions matching ">= 3.100.0"...
+- Installing hashicorp/azurerm v4.59.0...
+- Installed hashicorp/azurerm v4.59.0 (signed by HashiCorp)
+Terraform has created a lock file .terraform.lock.hcl to record the provider
+selections it made above. Include this file in your version control repository
+so that Terraform can guarantee to make the same selections by default when
+you run "terraform init" in the future.
+
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ 
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ 
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ terraform fmt -recursiveterraform fmt -recursive
+variables.tf
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ terraform validateterraform validate
+Success! The configuration is valid.
+
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ terraform plan -out tfplanterraform plan -out tfplan
+
+Planning failed. Terraform encountered an error while generating this plan.
+
+╷
+│ Error: building account: unable to configure ResourceManagerAccount: subscription ID could not be determined and was not specified
+│ 
+│   with provider["registry.terraform.io/hashicorp/azurerm"],
+│   on versions.tf line 11, in provider "azurerm":
+│   11: provider "azurerm" {
+│ 
+╵
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ ls -la
+total 44
+drwxr-xr-x 3 tokud tokud 4096 Feb  7 15:53 .
+drwxr-xr-x 4 tokud tokud 4096 Jan 31 16:31 ..
+drwxr-xr-x 3 tokud tokud 4096 Feb  7 15:46 .terraform
+-rw-r--r-- 1 tokud tokud 1189 Feb  7 15:46 .terraform.lock.hcl
+-rw-r--r-- 1 tokud tokud 3263 Feb  7 15:36 main.tf
+-rw-r--r-- 1 tokud tokud  212 Feb  7 15:38 outputs.tf
+-rw-r--r-- 1 tokud tokud   32 Feb  7 15:39 terraform.tfvars
+-rw-r--r-- 1 tokud tokud 4162 Feb  7 15:53 tfplan
+-rw-r--r-- 1 tokud tokud  979 Feb  7 15:48 variables.tf
+-rw-r--r-- 1 tokud tokud  198 Feb  7 15:32 versions.tf
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ vi versions.tf 
+Vim: Warning: Output is not to a terminal
+[>4;2m="versions.tf" 13L, 198Bterraform {
+  required_version = ">= 1.5.0"
+  required_providers {
+    azurerm = {source  = "hashicorp/azurerm"version = ">= 3.100.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+}
+~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 1,1All~@k   2~@k   3~@k   4~@k   5~@k   6~@k   7~@k   8~@k   {}9~@k   {}10,0-1~@k   1,1  ~@k   2i -- INSERT --12,1All23456789101 {}2{}13,1All{}
+}~                                                                                                                                 2,123}13,1All }2-9{}2,9  101 {}23{13,1All2-93-172-9 3-102-9 {4{{}
+}5,2  {{}
+}4,2-9{}3{}4{}1  {}2-9}1  
+features {
+ }~                                                                                                                                 13,2-9All}1  
+  features {}~                                                                                                                                 12,13All4{}13,1All2-91  23subscription_id = var.subscription_id40^[  13,39All::wq[>4;m"versions.tf" 14L, 238B written
+>[>4;mtokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ vi teraraform.tfvars 
+Vim: Warning: Output is not to a terminal
+[>4;2m="terraform.tfvars" 1L, 32Badmin_password = "masaki325poi"
+~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 1,30All~@k   ~@k   ~@k   ~@k   ~@k   29~@k   8~@k   7~@k   6~@k   5~@k   4~@k   3~@k   2~@k   1~@k   0~@k   19~@k   8~@k   7~@k   6~@k   5~@k   4~@k   3~@k   2~@k   1~@k   0~@k   9 ~@k   8~@k   7~@k   6~@k   5~@k   4~@k   3~@k   2~@k   1~@k   ~@k   ~@k   ~@k   ~@k   ~@k   ~@k   ~@k   ~@k   ^[  ^[  ::q[>4;m>[>4;mtokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ vi terraform.tfvars variables.tf 
+Vim: Warning: Output is not to a terminal
+[>4;2m="variables.tf" 50L, 979Bvariable "location" {
+  type    = string
+  default = "japaneast"
+}
+
+# 既存リソース（Phase1）
+variable "rg_name" {
+  type    = string
+  default = "rg-entra-id-lab"
+}
+variable "vnet_name" {
+  type    = string
+  default = "vnet-lab"
+}
+
+# Phase2 追加
+variable "ad_subnet_name" {
+  type    = string
+  default = "snet-ad"
+}
+
+variable "ad_subnet_cidr" {
+  type    = string
+  default = "10.10.2.0/24"
+}
+
+variable "vm_name" {7,1Top~@k   6~@k   5,0-1~@k   {
+
+
+}4,1  ~@k   {
+
+
+}3~@k   2~@k   1~@k   ~@k   ~@k   ~@k   ~@k   ~@k   ~@k   ~@k   2~@k   3~@k   {
+
+
+}4~@k   {
+
+
+}5,0-1~@k   6,1  ~@k   7~@k   8~@k   9~@k   {
+
+
+}10,1~@k   {
+
+
+}1~@k   2~@k   3~@k   {
+
+
+}4~@k   {
+
+
+}5,0-1~@k   6,1  ~@k   7~@k   8~@k   9~@k   {
+
+
+}20~@k   {
+
+
+}1,0-1~@k   2,1  ~@k   
+type    = string23,14%~@k   
+default = "vm-dc01"24,18%~@k   
+{
+
+
+}}25,113%~@k   
+{
+
+
+}26,0-117%~@k   
+variable "vm_size" {27,121%~@k   
+type    = string28,126%~@k   
+default = "Standard_B2ms"29,130%~@k   
+{
+
+
+}}30,134%~@k   
+{
+
+
+}31,0-139%~@k   
+variable "admin_username" {32,143%~@k   
+type    = string33,147%~@k   
+default = "adadmin"34,152%~@k   
+{
+
+
+}}35,156%~@k   
+{
+
+
+}36,0-160%~@k   
+# パスワードは tfvars で渡す（Gitに上げない）37,165%~@k   
+variable "admin_password" {38,169%~@k   
+type      = string39,173%~@k   
+{
+
+
+}sensitive = true40,178%~@k   
+{
+
+
+}}41,0-182%~@k   
+42,186%~@k   
+# NSG：BastionSubnet からのみ RDP 許可（安全）43,191%~@k   
+# Phase1で Bastion を vnet-lab に置いていない場合があるため、44,195%~@k   
+# vnet-lab 内に "AzureBastionSubnet" が無い場合は Step2-1-4で検証して分岐する45,1Bot~@k   {
+
+
+}6~@k   {
+
+
+}7,0-1~@k   8,1  ~@k   9~@k   50~@k   ~@k   ~@k   ~@k   ~@k   ~@k   ~@k   ~@k   49~@k   8~@k   7,0-1~@k   {
+
+
+}6,1  ~@k   {
+
+
+}5~@k   4~@k   3~@k   2~@k   1,0-1i -- INSERT --41,1Bot42,195%43,192%2variable "subscription_id" {
+  type= string
+  desc(paste) --ription = "Azure Subscription ID for this environment"
+}
+sensitive = true--a46,182%
+}47,186%
+46,189%{
+
+
+}5{
+
+
+}434{
+
+
+}5{
+
+
+}43234{
+
+
+}5{
+
+
+}6
+variable "subscription_id" {
+  type        = string  description = "Azure Subscription ID for this environment"
+}# NSG：BastionSubnet からのみ RDP 許可（安全）45,292%{1
+description = "Azure Subscription ID for this environment"# Phase1で Bastion を vnet-lab に置いていない場合があるため、44,6196%059876543210498765432103987654321029876543210198765432109 87654321
+type= string# vnet-lab 内に "AzureBastionSubnet" が無い場合は Step2-1-4で検証して分岐する43,23Bot210198765432109 87654321
+variable "subscription_id" {~                                                                                                                                 42,29Bot876543210198765432109 87654321
+~                                                                                                                                 41,1Bot21{
+
+
+}0{
+
+
+}39876{
+
+
+}5{
+
+
+}4321}{
+
+
+}30,1Botdefault = "10.10.2.0/24"{
+
+
+}29,1Bottype    = string28,195%variable "ad_subnet_cidr" {27,191%26,186%}{
+
+
+}25,182%default = "snet-ad"{
+
+
+}24,178%type    = string23,173%variable "ad_subnet_name" {22,169%# Phase2 追加21,165%{
+
+
+}20,160%}{
+
+
+}19,156%default = "vnet-lab"18,152%type    = string17,147%variable "vnet_name" {16,143%}15,139%default = "rg-entra-id-lab"{
+
+
+}14,134%type    = string{
+
+
+}13,130%variable "rg_name" {12,126%# 既存リソース（Phase1）11,121%{
+
+
+}10,117%}{
+
+
+}9,113%default = "japaneast"8,18%type    = string7,14%variable "location" {6,1Top5{
+
+
+}4{
+
+
+}3212321variable "location" {2,1Topvariable "location" {3,1Top21variable "subscription_id"{
+  type(paste) --= string
+  description = "Azure Subscription ID for this environment"
+}--a5,1Top{
+
+
+}4{
+
+
+}32123{
+
+
+}4{
+
+
+}5
+variable "subscription_id" {
+  type        = string  description = "Azure Subscription ID for this environment"
+}variable "ad_subnet_cidr" {4,2Top1{
+
+
+}5^[  5,0-1Top::wq[>4;m"variables.tf" 55L, 1095B written
+>[>4;mtokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ vi variables.tf [4@terraform.tfvars
+Vim: Warning: Output is not to a terminal
+[>4;2m="terraform.tfvars" 1L, 32Badmin_password = "masaki325poi"
+~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 1,1All^M  i -- INSERT --1,1Alladmin_password = "masaki325poi"21subscription_id = "eecf2b7f-636f-47b8-9c5a-f561a4e59084"5767^[  1,56All::wq[>4;m"terraform.tfvars" 2L, 89B written
+>[>4;mtokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ terraform init -reconfigureterraform init -reconfigure
+Initializing the backend...
+Initializing provider plugins...
+- Reusing previous version of hashicorp/azurerm from the dependency lock file
+- Using previously-installed hashicorp/azurerm v4.59.0
+
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ terraform plan -out tfplanterraform plan -out tfplan
+data.azurerm_resource_group.rg: Reading...
+data.azurerm_resource_group.rg: Read complete after 0s [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab]
+data.azurerm_virtual_network.vnet: Reading...
+data.azurerm_virtual_network.vnet: Read complete after 1s [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/virtualNetworks/vnet-lab]
+data.azurerm_subnet.bastion: Reading...
+data.azurerm_subnet.bastion: Read complete after 0s [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/virtualNetworks/vnet-lab/subnets/AzureBastionSubnet]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform planned the following actions, but then encountered a problem:
+
+  # azurerm_network_interface.nic will be created
+  + resource "azurerm_network_interface" "nic" {
+      + accelerated_networking_enabled = false
+      + applied_dns_servers            = (known after apply)
+      + id                             = (known after apply)
+      + internal_domain_name_suffix    = (known after apply)
+      + ip_forwarding_enabled          = false
+      + location                       = "japaneast"
+      + mac_address                    = (known after apply)
+      + name                           = "nic-vm-dc01"
+      + private_ip_address             = (known after apply)
+      + private_ip_addresses           = (known after apply)
+      + resource_group_name            = "rg-entra-id-lab"
+      + virtual_machine_id             = (known after apply)
+
+      + ip_configuration {
+          + gateway_load_balancer_frontend_ip_configuration_id = (known after apply)
+          + name                                               = "ipconfig1"
+          + primary                                            = (known after apply)
+          + private_ip_address                                 = (known after apply)
+          + private_ip_address_allocation                      = "Dynamic"
+          + private_ip_address_version                         = "IPv4"
+          + subnet_id                                          = (known after apply)
+        }
+    }
+
+  # azurerm_network_interface_security_group_association.assoc will be created
+  + resource "azurerm_network_interface_security_group_association" "assoc" {
+      + id                        = (known after apply)
+      + network_interface_id      = (known after apply)
+      + network_security_group_id = (known after apply)
+    }
+
+  # azurerm_network_security_group.nsg will be created
+  + resource "azurerm_network_security_group" "nsg" {
+      + id                  = (known after apply)
+      + location            = "japaneast"
+      + name                = "nsg-vm-dc01"
+      + resource_group_name = "rg-entra-id-lab"
+      + security_rule       = [
+          + {
+              + access                                     = "Allow"
+              + destination_address_prefix                 = "*"
+              + destination_address_prefixes               = []
+              + destination_application_security_group_ids = []
+              + destination_port_range                     = "3389"
+              + destination_port_ranges                    = []
+              + direction                                  = "Inbound"
+              + name                                       = "Allow-RDP-From-BastionSubnet"
+              + priority                                   = 100
+              + protocol                                   = "Tcp"
+              + source_address_prefix                      = "10.10.2.0/26"
+              + source_address_prefixes                    = []
+              + source_application_security_group_ids      = []
+              + source_port_range                          = "*"
+              + source_port_ranges                         = []
+                # (1 unchanged attribute hidden)
+            },
+          + {
+              + access                                     = "Deny"
+              + destination_address_prefix                 = "*"
+              + destination_address_prefixes               = []
+              + destination_application_security_group_ids = []
+              + destination_port_range                     = "*"
+              + destination_port_ranges                    = []
+              + direction                                  = "Inbound"
+              + name                                       = "Deny-All-Inbound"
+              + priority                                   = 4096
+              + protocol                                   = "*"
+              + source_address_prefix                      = "*"
+              + source_address_prefixes                    = []
+              + source_application_security_group_ids      = []
+              + source_port_range                          = "*"
+              + source_port_ranges                         = []
+                # (1 unchanged attribute hidden)
+            },
+        ]
+    }
+
+  # azurerm_subnet.ad will be created
+  + resource "azurerm_subnet" "ad" {
+      + address_prefixes                              = [
+          + "10.10.2.0/24",
+        ]
+      + default_outbound_access_enabled               = true
+      + id                                            = (known after apply)
+      + name                                          = "snet-ad"
+      + private_endpoint_network_policies             = "Disabled"
+      + private_link_service_network_policies_enabled = true
+      + resource_group_name                           = "rg-entra-id-lab"
+      + virtual_network_name                          = "vnet-lab"
+    }
+
+Plan: 4 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + ad_subnet_id  = (known after apply)
+  + vm_private_ip = (known after apply)
+╷
+│ Error: "admin_password" has to fulfill 3 out of these 4 conditions: Has lower characters, Has upper characters, Has a digit, Has a special character other than "_", fullfiled only 2 conditions
+│ 
+│   with azurerm_windows_virtual_machine.vm,
+│   on main.tf line 83, in resource "azurerm_windows_virtual_machine" "vm":
+│   83:   admin_password      = var.admin_password
+│ 
+╵
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ terraform plan -out tfplaninit -reconfigurevi terraform.tfvars 
+Vim: Warning: Output is not to a terminal
+[>4;2m="terraform.tfvars" 2L, 89Bsubscription_id = "eecf2b7f-636f-47b8-9c5a-f561a4e59084"
+admin_password = "masaki325poi"
+~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 ~                                                                                                                                 1,56All~@k   2,31~@k   0i -- INSERT --2,30All29876543210asaki325poi"19Masaki325poi"2012345678@poi"9876543210^[  2,19All::wq[>4;m"terraform.tfvars" 2L, 90B written
+>[>4;mtokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ vi terraform.tfvars terraform plan -out tfplaninit -reconfigure
+Initializing the backend...
+Initializing provider plugins...
+- Reusing previous version of hashicorp/azurerm from the dependency lock file
+- Using previously-installed hashicorp/azurerm v4.59.0
+
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ terraform init -reconfigurevi terraform.tfvars terraform plan -out tfplan
+data.azurerm_resource_group.rg: Reading...
+data.azurerm_resource_group.rg: Read complete after 1s [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab]
+data.azurerm_virtual_network.vnet: Reading...
+data.azurerm_virtual_network.vnet: Read complete after 0s [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/virtualNetworks/vnet-lab]
+data.azurerm_subnet.bastion: Reading...
+data.azurerm_subnet.bastion: Read complete after 1s [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/virtualNetworks/vnet-lab/subnets/AzureBastionSubnet]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # azurerm_network_interface.nic will be created
+  + resource "azurerm_network_interface" "nic" {
+      + accelerated_networking_enabled = false
+      + applied_dns_servers            = (known after apply)
+      + id                             = (known after apply)
+      + internal_domain_name_suffix    = (known after apply)
+      + ip_forwarding_enabled          = false
+      + location                       = "japaneast"
+      + mac_address                    = (known after apply)
+      + name                           = "nic-vm-dc01"
+      + private_ip_address             = (known after apply)
+      + private_ip_addresses           = (known after apply)
+      + resource_group_name            = "rg-entra-id-lab"
+      + virtual_machine_id             = (known after apply)
+
+      + ip_configuration {
+          + gateway_load_balancer_frontend_ip_configuration_id = (known after apply)
+          + name                                               = "ipconfig1"
+          + primary                                            = (known after apply)
+          + private_ip_address                                 = (known after apply)
+          + private_ip_address_allocation                      = "Dynamic"
+          + private_ip_address_version                         = "IPv4"
+          + subnet_id                                          = (known after apply)
+        }
+    }
+
+  # azurerm_network_interface_security_group_association.assoc will be created
+  + resource "azurerm_network_interface_security_group_association" "assoc" {
+      + id                        = (known after apply)
+      + network_interface_id      = (known after apply)
+      + network_security_group_id = (known after apply)
+    }
+
+  # azurerm_network_security_group.nsg will be created
+  + resource "azurerm_network_security_group" "nsg" {
+      + id                  = (known after apply)
+      + location            = "japaneast"
+      + name                = "nsg-vm-dc01"
+      + resource_group_name = "rg-entra-id-lab"
+      + security_rule       = [
+          + {
+              + access                                     = "Allow"
+              + destination_address_prefix                 = "*"
+              + destination_address_prefixes               = []
+              + destination_application_security_group_ids = []
+              + destination_port_range                     = "3389"
+              + destination_port_ranges                    = []
+              + direction                                  = "Inbound"
+              + name                                       = "Allow-RDP-From-BastionSubnet"
+              + priority                                   = 100
+              + protocol                                   = "Tcp"
+              + source_address_prefix                      = "10.10.2.0/26"
+              + source_address_prefixes                    = []
+              + source_application_security_group_ids      = []
+              + source_port_range                          = "*"
+              + source_port_ranges                         = []
+                # (1 unchanged attribute hidden)
+            },
+          + {
+              + access                                     = "Deny"
+              + destination_address_prefix                 = "*"
+              + destination_address_prefixes               = []
+              + destination_application_security_group_ids = []
+              + destination_port_range                     = "*"
+              + destination_port_ranges                    = []
+              + direction                                  = "Inbound"
+              + name                                       = "Deny-All-Inbound"
+              + priority                                   = 4096
+              + protocol                                   = "*"
+              + source_address_prefix                      = "*"
+              + source_address_prefixes                    = []
+              + source_application_security_group_ids      = []
+              + source_port_range                          = "*"
+              + source_port_ranges                         = []
+                # (1 unchanged attribute hidden)
+            },
+        ]
+    }
+
+  # azurerm_subnet.ad will be created
+  + resource "azurerm_subnet" "ad" {
+      + address_prefixes                              = [
+          + "10.10.2.0/24",
+        ]
+      + default_outbound_access_enabled               = true
+      + id                                            = (known after apply)
+      + name                                          = "snet-ad"
+      + private_endpoint_network_policies             = "Disabled"
+      + private_link_service_network_policies_enabled = true
+      + resource_group_name                           = "rg-entra-id-lab"
+      + virtual_network_name                          = "vnet-lab"
+    }
+
+  # azurerm_windows_virtual_machine.vm will be created
+  + resource "azurerm_windows_virtual_machine" "vm" {
+      + admin_password                                         = (sensitive value)
+      + admin_username                                         = "adadmin"
+      + allow_extension_operations                             = (known after apply)
+      + automatic_updates_enabled                              = (known after apply)
+      + bypass_platform_safety_checks_on_user_schedule_enabled = false
+      + computer_name                                          = (known after apply)
+      + disk_controller_type                                   = (known after apply)
+      + enable_automatic_updates                               = (known after apply)
+      + extensions_time_budget                                 = "PT1H30M"
+      + hotpatching_enabled                                    = (known after apply)
+      + id                                                     = (known after apply)
+      + location                                               = "japaneast"
+      + max_bid_price                                          = -1
+      + name                                                   = "vm-dc01"
+      + network_interface_ids                                  = (known after apply)
+      + os_managed_disk_id                                     = (known after apply)
+      + patch_assessment_mode                                  = (known after apply)
+      + patch_mode                                             = (known after apply)
+      + platform_fault_domain                                  = -1
+      + priority                                               = "Regular"
+      + private_ip_address                                     = (known after apply)
+      + private_ip_addresses                                   = (known after apply)
+      + provision_vm_agent                                     = (known after apply)
+      + public_ip_address                                      = (known after apply)
+      + public_ip_addresses                                    = (known after apply)
+      + resource_group_name                                    = "rg-entra-id-lab"
+      + size                                                   = "Standard_B2ms"
+      + virtual_machine_id                                     = (known after apply)
+      + vm_agent_platform_updates_enabled                      = (known after apply)
+
+      + os_disk {
+          + caching                   = "ReadWrite"
+          + disk_size_gb              = (known after apply)
+          + id                        = (known after apply)
+          + name                      = (known after apply)
+          + storage_account_type      = "StandardSSD_LRS"
+          + write_accelerator_enabled = false
+        }
+
+      + source_image_reference {
+          + offer     = "WindowsServer"
+          + publisher = "MicrosoftWindowsServer"
+          + sku       = "2022-datacenter-azure-edition"
+          + version   = "latest"
+        }
+
+      + termination_notification (known after apply)
+    }
+
+Plan: 5 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + ad_subnet_id  = (known after apply)
+  + vm_id         = (known after apply)
+  + vm_private_ip = (known after apply)
+
+─────────────────────────────────────────────────────────────────────────────
+
+Saved the plan to: tfplan
+
+To perform exactly these actions, run the following command to apply:
+    terraform apply "tfplan"
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ terraform outputterraform output
+╷
+│ Warning: No outputs found
+│ 
+│ The state file either has no outputs defined, or all the defined outputs
+│ are empty. Please define an output in your configuration with the `output`
+│ keyword and run `terraform refresh` for it to become available. If you are
+│ using interpolation, please verify the interpolated value is not empty. You
+│ can use the `terraform console` command to assist.
+╵
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ terraform apply tfplanterraform apply tfplan
+azurerm_subnet.ad: Creating...
+azurerm_network_security_group.nsg: Creating...
+azurerm_network_security_group.nsg: Creation complete after 2s [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/networkSecurityGroups/nsg-vm-dc01]
+╷
+│ Error: creating Subnet (Subscription: "eecf2b7f-636f-47b8-9c5a-f561a4e59084"
+│ Resource Group Name: "rg-entra-id-lab"
+│ Virtual Network Name: "vnet-lab"
+│ Subnet Name: "snet-ad"): performing CreateOrUpdate: unexpected status 400 (400 Bad Request) with error: NetcfgSubnetRangesOverlap: Subnet 'snet-ad' is not valid because its IP address range overlaps with that of an existing subnet in virtual network 'vnet-lab'.
+│ 
+│   with azurerm_subnet.ad,
+│   on main.tf line 12, in resource "azurerm_subnet" "ad":
+│   12: resource "azurerm_subnet" "ad" {
+│ 
+╵
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ 
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ 
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ ls admain.tf 
+main.tf
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ vils main.tf [1@v[1@i
+Vim: Warning: Output is not to a terminal
+[>4;2m="main.tf" 98L, 3263Bsubnet_id= azurerm_subnet.ad.id
+    private_ip_address_allocation = "Dynamic"
+  }
+}
+
+# NIC にNSG紐付け
+resource "azurerm_network_interface_security_group_association" "assoc" {
+  network_interface_id      = azurerm_network_interface.nic.id
+  network_security_group_id = azurerm_network_security_group.nsg.id
+}
+
+# Windows Server 2022 VM
+resource "azurerm_windows_virtual_machine" "vm" {
+  name= var.vm_name
+  location= data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  size= var.vm_size
+  admin_username      = var.admin_username
+  admin_password      = var.admin_password
+
+  network_interface_ids = [azurerm_network_interface.nic.id]
+
+  os_disk {
+    caching= "ReadWrite"
+    storage_account_type = "StandardSSD_LRS"
+  }
+
+  source_image_reference {
+    publisher = "MicrosoftWindowsServer"
+    offer     = "WindowsServer"
+    sku= "2022-datacenter-azure-edition"
+    version   = "latest"
+  }
+}98,1Bot~@k   {}7~@k   6~@k   5~@k   4~@k   3~@k   2~@k   1,0-1~@k   0,1  ~@k   89~@k   8~@k   7~@k   6,0-1~@k   5,1  ~@k   4,0-1~@k   3,1  ~@k   2~@k   1~@k   0~@k   79~@k   8~@k   7~@k   6~@k   5,0-1~@k   {
+
+
+}4,1  ~@k   {
+
+
+}3~@k   2~@k   1~@k   0~@k   name= "ipconfig1"69,0-198%~@k   ip_configuration {68,196%~@k   67,195%~@k   resource_group_name = data.azurerm_resource_group.rg.name66,193%~@k   location= data.azurerm_resource_group.rg.location65,192%~@k   name= "nic-${var.vm_name}"64,190%~@k   resource "azurerm_network_interface" "nic" {63,189%~@k   # NIC（Privateのみ）62,0-187%~@k   61,185%~@k   }60,184%~@k   }59,182%~@k   destination_address_prefix = "*"58,181%~@k   source_address_prefix      = "*"57,179%~@k   destination_port_range     = "*"56,0-178%~@k   source_port_range= "*"55,176%~@k   protocol= "*"54,175%~@k   access= "Deny"53,173%~@k   direction= "Inbound"52,171%~@k   priority= 409651,170%~@k   name= "Deny-All-Inbound"50,168%~@k   security_rule {49,167%~@k   48,165%~@k   }47,164%~@k   destination_address_prefix = "*"46,162%~@k   source_address_prefix      = data.azurerm_subnet.bastion.address_prefixes[0]45,160%~@k   destination_port_range     = "3389"44,159%~@k   source_port_range= "*"43,0-157%~@k   protocol= "Tcp"42,156%~@k   access= "Allow"41,154%~@k   direction= "Inbound"40,153%~@k   priority= 10039,151%~@k   name= "Allow-RDP-From-BastionSubnet"38,150%~@k   security_rule {37,148%~@k   36,146%~@k   resource_group_name = data.azurerm_resource_group.rg.name35,145%~@k   location= data.azurerm_resource_group.rg.location34,143%~@k   name= "nsg-${var.vm_name}"33,142%~@k   resource "azurerm_network_security_group" "nsg" {32,140%~@k   # NSG（RDPは BastionSubnet のみ許可）31,0-139%~@k   30,137%~@k   }29,135%~@k   virtual_network_name = data.azurerm_virtual_network.vnet.name28,134%~@k   resource_group_name  = data.azurerm_resource_group.rg.name27,132%~@k   name= "AzureBastionSubnet"26,131%~@k   data "azurerm_subnet" "bastion" {25,0-129%~@k   # BastionSubnet（既存の想定）を参照（存在しない場合は plan で落ちる→Step2-1-4で確認）{}24,128%~@k   {}23,126%~@k   }22,125%~@k   address_prefixes     = [var.ad_subnet_cidr]21,123%~@k   virtual_network_name = data.azurerm_virtual_network.vnet.name20,121%~@k   resource_group_name  = data.azurerm_resource_group.rg.name19,120%~@k   name= var.ad_subnet_name18,0-118%~@k   resource "azurerm_subnet" "ad" {}17,117%~@k   # AD用Subnet（新規）{}16,115%~@k   15,114%~@k   }14,112%~@k   resource_group_name = data.azurerm_resource_group.rg.name13,110%~@k   name= var.vnet_name12,19%~@k   data "azurerm_virtual_network" "vnet" {11,17%~@k   10,0-16%~@k   }{
+
+
+}9,14%~@k   name = var.rg_name{
+
+
+}8,13%~@k   data "azurerm_resource_group" "rg" {7,11%~@k   # 既存RG/VNet取得6,1Top~@k   5,0-1~@k   {
+
+}4,1  ~@k   {
+
+}3~@k   2~@k   1~@k   ~@k   ~@k   ~@k   2~@k   3~@k   {
+
+}4~@k   {
+
+}5,0-1~@k   6,1  ~@k   7~@k   8~@k   {
+
+
+}9~@k   {
+
+
+}10,0-1~@k   1,1  ~@k   2~@k   3~@k   4~@k   5~@k   6~@k   {}7~@k   {}8,0-1~@k   9,1  ~@k   20~@k   1~@k   2~@k   3~@k   2~@k   3~@k   {}4~@k   {}5,0-1~@k   {}4,1  ~@k   {}3~@k   2~@k   1~@k   0~@k   19~@k   8,0-1~@k   9,1  ~@k   20~@k   1~@k   2~@k   3~@k   {}4~@k   {}5,0-1~@k   6,1  ~@k   7~@k   8~@k   9~@k   
+direction= "Inbound"30,11%~@k   
+access= "Allow"31,0-13%~@k   
+protocol= "Tcp"32,14%~@k   
+source_port_range= "*"33,16%~@k   
+destination_port_range     = "3389"34,17%~@k   
+source_address_prefix      = data.azurerm_subnet.bastion.address_prefixes[0]35,19%~@k   
+destination_address_prefix = "*"36,110%~@k   
+}37,112%~@k   
+38,114%~@k   
+security_rule {39,115%~@k   
+name= "Deny-All-Inbound"40,117%~@k   
+priority= 409641,118%~@k   
+direction= "Inbound"42,120%~@k   
+access= "Deny"43,0-121%~@k   
+protocol= "*"44,123%~@k   
+source_port_range= "*"45,125%~@k   
+destination_port_range     = "*"46,126%~@k   
+source_address_prefix      = "*"47,128%~@k   
+destination_address_prefix = "*"48,129%~@k   
+}49,131%~@k   
+}50,132%~@k   
+51,134%~@k   
+# NIC（Privateのみ）52,135%~@k   
+resource "azurerm_network_interface" "nic" {53,137%~@k   
+name= "nic-${var.vm_name}"54,139%~@k   
+{}location= data.azurerm_resource_group.rg.location55,140%~@k   
+}resource_group_name = data.azurerm_resource_group.rg.name56,0-142%~@k   
+57,143%~@k   
+ip_configuration {58,145%~@k   
+name= "ipconfig1"59,146%~@k   
+subnet_id= azurerm_subnet.ad.id60,148%~@k   
+private_ip_address_allocation = "Dynamic"61,150%~@k   
+}62,0-151%~@k   
+}63,153%~@k   
+64,154%~@k   
+# NIC にNSG紐付け65,156%~@k   
+resource "azurerm_network_interface_security_group_association" "assoc" {66,157%~@k   
+network_interface_id      = azurerm_network_interface.nic.id67,159%~@k   
+{}network_security_group_id = azurerm_network_security_group.nsg.id68,160%~@k   
+{}}69,0-162%~@k   
+70,164%~@k   
+# Windows Server 2022 VM71,165%~@k   
+resource "azurerm_windows_virtual_machine" "vm" {72,167%~@k   
+name= var.vm_name73,168%~@k   
+{
+
+
+}location= data.azurerm_resource_group.rg.location74,170%~@k   
+{
+
+
+}resource_group_name = data.azurerm_resource_group.rg.name75,0-171%~@k   
+size= var.vm_size76,173%~@k   
+admin_username      = var.admin_username77,175%~@k   
+admin_password      = var.admin_password78,176%~@k   
+79,178%~@k   
+network_interface_ids = [azurerm_network_interface.nic.id]80,179%~@k   
+81,181%~@k   
+os_disk {82,182%~@k   
+caching= "ReadWrite"83,184%~@k   
+storage_account_type = "StandardSSD_LRS"84,0-185%~@k   
+}85,187%~@k   
+86,0-189%~@k   
+source_image_reference {87,190%~@k   
+publisher = "MicrosoftWindowsServer"88,192%~@k   
+offer     = "WindowsServer"89,193%~@k   
+sku= "2022-datacenter-azure-edition"90,195%~@k   
+version   = "latest"91,0-196%~@k   
+}92,198%~@k   
+}93,1Bot~@k   4~@k   5~@k   6~@k   7~@k   {}8~@k   ~@k   ~@k   ~@k   {}7~@k   6~@k   5~@k   4~@k   3~@k   2~@k   1,0-1~@k   0,1  ~@k   89~@k   8~@k   7~@k   6,0-1~@k   5,1  ~@k   4,0-1~@k   3,1  ~@k   2~@k   1~@k   0~@k   79~@k   8~@k   7~@k   6~@k   5,0-1~@k   {
+
+
+}4,1  ~@k   {
+
+
+}3~@k   2~@k   1~@k   0~@k   name= "ipconfig1"69,0-198%~@k   ip_configuration {68,196%~@k   67,195%~@k   resource_group_name = data.azurerm_resource_group.rg.name66,193%~@k   location= data.azurerm_resource_group.rg.location65,192%~@k   name= "nic-${var.vm_name}"64,190%~@k   resource "azurerm_network_interface" "nic" {63,189%~@k   # NIC（Privateのみ）62,0-187%~@k   61,185%~@k   }60,184%~@k   }59,182%~@k   destination_address_prefix = "*"58,181%~@k   source_address_prefix      = "*"57,179%~@k   destination_port_range     = "*"56,0-178%~@k   source_port_range= "*"55,176%~@k   protocol= "*"54,175%~@k   access= "Deny"53,173%~@k   direction= "Inbound"52,171%~@k   priority= 409651,170%~@k   name= "Deny-All-Inbound"50,168%~@k   security_rule {49,167%~@k   48,165%~@k   }47,164%~@k   destination_address_prefix = "*"46,162%~@k   source_address_prefix      = data.azurerm_subnet.bastion.address_prefixes[0]45,160%~@k   destination_port_range     = "3389"44,159%~@k   source_port_range= "*"43,0-157%~@k   protocol= "Tcp"42,156%~@k   access= "Allow"41,154%~@k   direction= "Inbound"40,153%~@k   priority= 10039,151%~@k   name= "Allow-RDP-From-BastionSubnet"38,150%~@k   security_rule {37,148%~@k   36,146%~@k   resource_group_name = data.azurerm_resource_group.rg.name35,145%~@k   location= data.azurerm_resource_group.rg.location34,143%~@k   name= "nsg-${var.vm_name}"33,142%~@k   resource "azurerm_network_security_group" "nsg" {32,140%~@k   # NSG（RDPは BastionSubnet のみ許可）31,0-139%~@k   30,137%~@k   }29,135%~@k   virtual_network_name = data.azurerm_virtual_network.vnet.name28,134%~@k   resource_group_name  = data.azurerm_resource_group.rg.name27,132%~@k   name= "AzureBastionSubnet"26,131%~@k   data "azurerm_subnet" "bastion" {25,0-129%~@k   # BastionSubnet（既存の想定）を参照（存在しない場合は plan で落ちる→Step2-1-4で確認）{}24,128%~@k   {}23,126%~@k   }22,125%~@k   address_prefixes     = [var.ad_subnet_cidr]21,123%~@k   virtual_network_name = data.azurerm_virtual_network.vnet.name20,121%~@k   resource_group_name  = data.azurerm_resource_group.rg.name19,120%~@k   name= var.ad_subnet_name18,0-118%~@k   resource "azurerm_subnet" "ad" {}17,117%~@k   # AD用Subnet（新規）{}16,115%~@k   15,114%~@k   }14,112%~@k   resource_group_name = data.azurerm_resource_group.rg.name13,110%~@k   name= var.vnet_name12,19%~@k   data "azurerm_virtual_network" "vnet" {11,17%~@k   10,0-16%~@k   }{
+
+
+}9,14%~@k   name = var.rg_name{
+
+
+}8,13%~@k   data "azurerm_resource_group" "rg" {7,11%~@k   # 既存RG/VNet取得6,1Top~@k   5,0-1~@k   {
+
+}4,1  ~@k   {
+
+}3~@k   2~@k   1~@k   ~@k   ~@k   ~@k   ~@k   ~@k   ~@k   ::q[>4;m>[>4;mtokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ ls -a;la
+total 52
+drwxr-xr-x 3 tokud tokud 4096 Feb  7 16:09 .
+drwxr-xr-x 4 tokud tokud 4096 Jan 31 16:31 ..
+drwxr-xr-x 3 tokud tokud 4096 Feb  7 15:46 .terraform
+-rw-r--r-- 1 tokud tokud 1189 Feb  7 15:46 .terraform.lock.hcl
+-rw-r--r-- 1 tokud tokud 3263 Feb  7 15:36 main.tf
+-rw-r--r-- 1 tokud tokud  212 Feb  7 15:38 outputs.tf
+-rw-r--r-- 1 tokud tokud 5879 Feb  7 16:05 terraform.tfstate
+-rw-r--r-- 1 tokud tokud   90 Feb  7 16:03 terraform.tfvars
+-rw-r--r-- 1 tokud tokud 6881 Feb  7 16:03 tfplan
+-rw-r--r-- 1 tokud tokud 1095 Feb  7 16:00 variables.tf
+-rw-r--r-- 1 tokud tokud  238 Feb  7 15:57 versions.tf
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ ls -lavi main.tf 
+Vim: Warning: Output is not to a terminal
+[>4;2m="main.tf" 98L, 3263B# 既存RG/VNet取得
+data "azurerm_resource_group" "rg" {
+  name = var.rg_name
+}
+
+data "azurerm_virtual_network" "vnet" {
+  name= var.vnet_name
+  resource_group_name = data.azurerm_resource_group.rg.name
+}
+
+# AD用Subnet（新規）
+resource "azurerm_subnet" "ad" {
+  name= var.ad_subnet_name
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+  address_prefixes     = [var.ad_subnet_cidr]
+}
+
+# BastionSubnet（既存の想定）を参照（存在しない場合は plan で落ちる→Step2-1-4で確認）
+data "azurerm_subnet" "bastion" {
+  name= "AzureBastionSubnet"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+}
+
+# NSG（RDPは BastionSubnet のみ許可）
+resource "azurerm_network_security_group" "nsg" {
+  name= "nsg-${var.vm_name}"
+  location= data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+
+  security_rule {
+    name= "Allow-RDP-From-BastionSubnet"
+    priority= 1001,1Top~@k   ~@k   2~@k   3~@k   {
+
+}4~@k   {
+
+}5,0-1~@k   6,1  ~@k   7~@k   8~@k   {
+
+
+}9~@k   {
+
+
+}10,0-1~@k   1,1  ~@k   2~@k   1~@k   0,0-1~@k   {
+
+
+}9,1   ~@k   {
+
+
+}10,0-1~@k   1,1  ~@k   2~@k   3~@k   2~@k   1~@k   0,0-1~@k   {
+
+
+}9,1   ~@k   {
+
+
+}8~@k   7~@k   6~@k   5,0-1~@k   {
+
+}4,1  ~@k   {
+
+}3~@k   2~@k   1~@k   ~@k   ~@k   ~@k   ~@k   2~@k   3~@k   {
+
+}4~@k   {
+
+}5,0-1~@k   6,1  ~@k   7~@k   8~@k   {
+
+
+}9~@k   {
+
+
+}10,0-1~@k   1,1  ~@k   2~@k   3~@k   4~@k   5~@k   6~@k   {}7~@k   {}8,0-1~@k   9,1  ~@k   20~@k   1~@k   2~@k   3~@k   {}4~@k   {}5,0-1~@k   6,1  ~@k   7~@k   8~@k   9~@k   
+direction= "Inbound"30,11%~@k   
+access= "Allow"31,0-13%~@k   
+protocol= "Tcp"32,14%~@k   
+source_port_range= "*"33,16%~@k   
+destination_port_range     = "3389"34,17%~@k   
+source_address_prefix      = data.azurerm_subnet.bastion.address_prefixes[0]35,19%~@k   
+destination_address_prefix = "*"36,110%~@k   
+}37,112%~@k   
+38,114%~@k   
+security_rule {39,115%~@k   
+name= "Deny-All-Inbound"40,117%~@k   
+priority= 409641,118%~@k   
+direction= "Inbound"42,120%~@k   
+access= "Deny"43,0-121%~@k   
+protocol= "*"44,123%~@k   
+source_port_range= "*"45,125%~@k   
+destination_port_range     = "*"46,126%~@k   
+source_address_prefix      = "*"47,128%~@k   
+destination_address_prefix = "*"48,129%~@k   
+}49,131%~@k   
+}50,132%~@k   
+51,134%~@k   
+# NIC（Privateのみ）52,135%~@k   
+resource "azurerm_network_interface" "nic" {53,137%~@k   
+name= "nic-${var.vm_name}"54,139%~@k   
+{}location= data.azurerm_resource_group.rg.location55,140%~@k   
+}resource_group_name = data.azurerm_resource_group.rg.name56,0-142%~@k   
+57,143%~@k   
+ip_configuration {58,145%~@k   
+name= "ipconfig1"59,146%~@k   
+subnet_id= azurerm_subnet.ad.id60,148%~@k   
+private_ip_address_allocation = "Dynamic"61,150%~@k   
+}62,0-151%~@k   
+}63,153%~@k   
+64,154%~@k   
+# NIC にNSG紐付け65,156%~@k   
+resource "azurerm_network_interface_security_group_association" "assoc" {66,157%~@k   
+network_interface_id      = azurerm_network_interface.nic.id67,159%~@k   
+{}network_security_group_id = azurerm_network_security_group.nsg.id68,160%~@k   
+{}}69,0-162%~@k   
+70,164%~@k   
+# Windows Server 2022 VM71,165%~@k   
+resource "azurerm_windows_virtual_machine" "vm" {72,167%~@k   
+name= var.vm_name73,168%~@k   
+{
+
+
+}location= data.azurerm_resource_group.rg.location74,170%~@k   
+{
+
+
+}resource_group_name = data.azurerm_resource_group.rg.name75,0-171%~@k   
+size= var.vm_size76,173%~@k   
+admin_username      = var.admin_username77,175%~@k   
+admin_password      = var.admin_password78,176%~@k   
+79,178%~@k   
+network_interface_ids = [azurerm_network_interface.nic.id]80,179%~@k   
+81,181%~@k   
+os_disk {82,182%~@k   
+caching= "ReadWrite"83,184%~@k   
+storage_account_type = "StandardSSD_LRS"84,0-185%~@k   
+}85,187%~@k   
+86,0-189%~@k   
+source_image_reference {87,190%~@k   
+publisher = "MicrosoftWindowsServer"88,192%~@k   
+offer     = "WindowsServer"89,193%~@k   
+sku= "2022-datacenter-azure-edition"90,195%~@k   
+version   = "latest"91,0-196%~@k   
+}92,198%~@k   
+}93,1Bot~@k   4~@k   5~@k   6~@k   7~@k   {}8~@k   ~@k   ~@k   {}7~@k   6~@k   5~@k   4~@k   3~@k   2~@k   1,0-1~@k   0,1  ~@k   89~@k   8~@k   7~@k   6,0-1~@k   5,1  ~@k   4,0-1~@k   3,1  ~@k   2~@k   1~@k   0~@k   79~@k   8~@k   7~@k   6~@k   5,0-1~@k   {
+
+
+}4,1  ~@k   {
+
+
+}3~@k   2~@k   1~@k   0~@k   name= "ipconfig1"69,0-198%~@k   ip_configuration {68,196%~@k   67,195%~@k   resource_group_name = data.azurerm_resource_group.rg.name66,193%~@k   location= data.azurerm_resource_group.rg.location65,192%~@k   name= "nic-${var.vm_name}"64,190%~@k   resource "azurerm_network_interface" "nic" {63,189%~@k   # NIC（Privateのみ）62,0-187%~@k   61,185%~@k   }60,184%~@k   }59,182%~@k   destination_address_prefix = "*"58,181%~@k   source_address_prefix      = "*"57,179%~@k   destination_port_range     = "*"56,0-178%~@k   source_port_range= "*"55,176%~@k   protocol= "*"54,175%~@k   access= "Deny"53,173%~@k   direction= "Inbound"52,171%~@k   priority= 409651,170%~@k   name= "Deny-All-Inbound"50,168%~@k   security_rule {49,167%~@k   48,165%~@k   }47,164%~@k   destination_address_prefix = "*"46,162%~@k   source_address_prefix      = data.azurerm_subnet.bastion.address_prefixes[0]45,160%~@k   destination_port_range     = "3389"44,159%~@k   source_port_range= "*"43,0-157%~@k   protocol= "Tcp"42,156%~@k   access= "Allow"41,154%~@k   direction= "Inbound"40,153%~@k   priority= 10039,151%~@k   name= "Allow-RDP-From-BastionSubnet"38,150%~@k   security_rule {37,148%~@k   36,146%~@k   resource_group_name = data.azurerm_resource_group.rg.name35,145%~@k   location= data.azurerm_resource_group.rg.location34,143%~@k   name= "nsg-${var.vm_name}"33,142%~@k   resource "azurerm_network_security_group" "nsg" {32,140%~@k   # NSG（RDPは BastionSubnet のみ許可）31,0-139%~@k   30,137%~@k   }29,135%~@k   virtual_network_name = data.azurerm_virtual_network.vnet.name28,134%~@k   resource_group_name  = data.azurerm_resource_group.rg.name27,132%~@k   name= "AzureBastionSubnet"26,131%~@k   data "azurerm_subnet" "bastion" {25,0-129%~@k   # BastionSubnet（既存の想定）を参照（存在しない場合は plan で落ちる→Step2-1-4で確認）{}24,128%~@k   {}23,126%~@k   }22,125%~@k   address_prefixes     = [var.ad_subnet_cidr]21,123%~@k   virtual_network_name = data.azurerm_virtual_network.vnet.name20,121%~@k   resource_group_name  = data.azurerm_resource_group.rg.name19,120%~@k   name= var.ad_subnet_name18,0-118%~@k   resource "azurerm_subnet" "ad" {}17,117%~@k   # AD用Subnet（新規）{}16,115%~@k   15,114%~@k   }14,112%~@k   resource_group_name = data.azurerm_resource_group.rg.name13,110%~@k   name= var.vnet_name12,19%~@k   data "azurerm_virtual_network" "vnet" {11,17%~@k   10,0-16%~@k   }{
+
+
+}9,14%~@k   name = var.rg_name{
+
+
+}8,13%~@k   data "azurerm_resource_group" "rg" {7,11%~@k   # 既存RG/VNet取得6,1Top~@k   5,0-1~@k   {
+
+}4,1  ~@k   {
+
+}3~@k   2~@k   1~@k   ~@k   ~@k   ~@k   ::q][>4;m>[>4;mtokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ vi main.tf variables.tf 
+Vim: Warning: Output is not to a terminal
+[>4;2m="variables.tf" 55L, 1095Bvariable "subscription_id" {
+  type= string
+  description = "Azure Subscription ID for this environment"
+}
+
+variable "location" {
+  type    = string
+  default = "japaneast"
+}
+
+# 既存リソース（Phase1）
+variable "rg_name" {
+  type    = string
+  default = "rg-entra-id-lab"
+}
+variable "vnet_name" {
+  type    = string
+  default = "vnet-lab"
+}
+
+# Phase2 追加
+variable "ad_subnet_name" {
+  type    = string
+  default = "snet-ad"
+}
+
+variable "ad_subnet_cidr" {
+  type    = string
+  default = "10.10.2.0/24"
+}
+
+variable "vm_name" {
+  type    = string
+  default = "vm-dc01"5,0-1Top~@k   6,1  ~@k   7~@k   8~@k   {
+
+
+}9~@k   {
+
+
+}10,0-1~@k   1,1  ~@k   2~@k   3~@k   4~@k   {
+
+
+}5~@k   {
+
+
+}6~@k   7~@k   8~@k   {
+
+
+}9~@k   {
+
+
+}20,0-1~@k   1,1  ~@k   2~@k   3~@k   4~@k   {
+
+
+}5~@k   {
+
+
+}6,0-1~@k   7,1  ~@k   8~@k   9~@k   8~@k   7~@k   8~@k   7~@k   6,0-1~@k   7,1  ~@k   8~@k   9~@k   8~@k   2~@k   9i -- INSERT --29,2Top34567891012345
+{
+
+
+}}30,24%
+{
+
+
+}31,19%
+variable "vm_size" {32,1514%
+type    = string33,1519%
+default = "Standard_B2ms"34,1523%
+{
+
+
+}}35,228%
+{
+
+
+}36,133%
+variable "admin_username" {37,1538%
+type    = string38,1542%
+default = "adadmin"39,1547%
+{
+
+
+}}40,252%
+{
+
+
+}41,157%
+# パスワードは tfvars で渡す（Gitに上げない）42,1561%
+variable "admin_password" {43,1566%
+type      = string44,1571%
+{
+
+
+}sensitive = true45,276%{
+
+
+}4,15321,1 {
+
+
+}0,2{
+
+
+}39,15876,1 {
+
+
+}5,2{
+
+
+}4,15321,1 {
+
+
+}0,2{
+
+
+}29,156789201.0/24"01.0/24"10.0/24"2345678{
+
+
+}30,2 ^[  30,176%::wq 30,176%~@k   {
+
+
+}1,0-1^[  ^[  ::wq[>4;m"variables.tf" 55L, 1096B written
+>[>4;mtokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ vi variables.tf main.tf 
+Vim: Warning: Output is not to a terminal
+[>4;2m="main.tf" 98L, 3263B# 既存RG/VNet取得
+data "azurerm_resource_group" "rg" {
+  name = var.rg_name
+}
+
+data "azurerm_virtual_network" "vnet" {
+  name= var.vnet_name
+  resource_group_name = data.azurerm_resource_group.rg.name
+}
+
+# AD用Subnet（新規）
+resource "azurerm_subnet" "ad" {
+  name= var.ad_subnet_name
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+  address_prefixes     = [var.ad_subnet_cidr]
+}
+
+# BastionSubnet（既存の想定）を参照（存在しない場合は plan で落ちる→Step2-1-4で確認）
+data "azurerm_subnet" "bastion" {
+  name= "AzureBastionSubnet"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+}
+
+# NSG（RDPは BastionSubnet のみ許可）
+resource "azurerm_network_security_group" "nsg" {
+  name= "nsg-${var.vm_name}"
+  location= data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+
+  security_rule {
+    name= "Allow-RDP-From-BastionSubnet"
+    priority= 1001,1Top~@k   2~@k   3~@k   {
+
+}4~@k   {
+
+}5,0-1~@k   6,1  ~@k   7~@k   8~@k   {
+
+
+}9~@k   {
+
+
+}10,0-1~@k   1,1  ~@k   2~@k   3::q[>4;m>[>4;mtokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ sed -n '1,60p' main.tfsed -n '1,60p' main.tf
+# 既存RG/VNet取得
+data "azurerm_resource_group" "rg" {
+  name = var.rg_name
+}
+
+data "azurerm_virtual_network" "vnet" {
+  name                = var.vnet_name
+  resource_group_name = data.azurerm_resource_group.rg.name
+}
+
+# AD用Subnet（新規）
+resource "azurerm_subnet" "ad" {
+  name                 = var.ad_subnet_name
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+  address_prefixes     = [var.ad_subnet_cidr]
+}
+
+# BastionSubnet（既存の想定）を参照（存在しない場合は plan で落ちる→Step2-1-4で確認）
+data "azurerm_subnet" "bastion" {
+  name                 = "AzureBastionSubnet"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+}
+
+# NSG（RDPは BastionSubnet のみ許可）
+resource "azurerm_network_security_group" "nsg" {
+  name                = "nsg-${var.vm_name}"
+  location            = data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+
+  security_rule {
+    name                       = "Allow-RDP-From-BastionSubnet"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "3389"
+    source_address_prefix      = data.azurerm_subnet.bastion.address_prefixes[0]
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "Deny-All-Inbound"
+    priority                   = 4096
+    direction                  = "Inbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+}
+
+# NIC（Privateのみ）
+resource "azurerm_network_interface" "nic" {
+  name                = "nic-${var.vm_name}"
+  location            = data.azurerm_resource_group.rg.location
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ terraform apply tfplanterraform apply tfplan
+╷
+│ Error: Saved plan is stale
+│ 
+│ The given plan file can no longer be applied because the state was changed
+│ by another operation after the plan was created.
+╵
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ rm -f tfplanrm -f tfplan
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ terraform plan -out tfplanterraform plan -out tfplan
+data.azurerm_resource_group.rg: Reading...
+data.azurerm_resource_group.rg: Read complete after 0s [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab]
+data.azurerm_virtual_network.vnet: Reading...
+data.azurerm_virtual_network.vnet: Read complete after 1s [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/virtualNetworks/vnet-lab]
+data.azurerm_subnet.bastion: Reading...
+data.azurerm_subnet.bastion: Read complete after 0s [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/virtualNetworks/vnet-lab/subnets/AzureBastionSubnet]
+azurerm_network_security_group.nsg: Refreshing state... [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/networkSecurityGroups/nsg-vm-dc01]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # azurerm_network_interface.nic will be created
+  + resource "azurerm_network_interface" "nic" {
+      + accelerated_networking_enabled = false
+      + applied_dns_servers            = (known after apply)
+      + id                             = (known after apply)
+      + internal_domain_name_suffix    = (known after apply)
+      + ip_forwarding_enabled          = false
+      + location                       = "japaneast"
+      + mac_address                    = (known after apply)
+      + name                           = "nic-vm-dc01"
+      + private_ip_address             = (known after apply)
+      + private_ip_addresses           = (known after apply)
+      + resource_group_name            = "rg-entra-id-lab"
+      + virtual_machine_id             = (known after apply)
+
+      + ip_configuration {
+          + gateway_load_balancer_frontend_ip_configuration_id = (known after apply)
+          + name                                               = "ipconfig1"
+          + primary                                            = (known after apply)
+          + private_ip_address                                 = (known after apply)
+          + private_ip_address_allocation                      = "Dynamic"
+          + private_ip_address_version                         = "IPv4"
+          + subnet_id                                          = (known after apply)
+        }
+    }
+
+  # azurerm_network_interface_security_group_association.assoc will be created
+  + resource "azurerm_network_interface_security_group_association" "assoc" {
+      + id                        = (known after apply)
+      + network_interface_id      = (known after apply)
+      + network_security_group_id = "/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/networkSecurityGroups/nsg-vm-dc01"
+    }
+
+  # azurerm_subnet.ad will be created
+  + resource "azurerm_subnet" "ad" {
+      + address_prefixes                              = [
+          + "10.10.10.0/24",
+        ]
+      + default_outbound_access_enabled               = true
+      + id                                            = (known after apply)
+      + name                                          = "snet-ad"
+      + private_endpoint_network_policies             = "Disabled"
+      + private_link_service_network_policies_enabled = true
+      + resource_group_name                           = "rg-entra-id-lab"
+      + virtual_network_name                          = "vnet-lab"
+    }
+
+  # azurerm_windows_virtual_machine.vm will be created
+  + resource "azurerm_windows_virtual_machine" "vm" {
+      + admin_password                                         = (sensitive value)
+      + admin_username                                         = "adadmin"
+      + allow_extension_operations                             = (known after apply)
+      + automatic_updates_enabled                              = (known after apply)
+      + bypass_platform_safety_checks_on_user_schedule_enabled = false
+      + computer_name                                          = (known after apply)
+      + disk_controller_type                                   = (known after apply)
+      + enable_automatic_updates                               = (known after apply)
+      + extensions_time_budget                                 = "PT1H30M"
+      + hotpatching_enabled                                    = (known after apply)
+      + id                                                     = (known after apply)
+      + location                                               = "japaneast"
+      + max_bid_price                                          = -1
+      + name                                                   = "vm-dc01"
+      + network_interface_ids                                  = (known after apply)
+      + os_managed_disk_id                                     = (known after apply)
+      + patch_assessment_mode                                  = (known after apply)
+      + patch_mode                                             = (known after apply)
+      + platform_fault_domain                                  = -1
+      + priority                                               = "Regular"
+      + private_ip_address                                     = (known after apply)
+      + private_ip_addresses                                   = (known after apply)
+      + provision_vm_agent                                     = (known after apply)
+      + public_ip_address                                      = (known after apply)
+      + public_ip_addresses                                    = (known after apply)
+      + resource_group_name                                    = "rg-entra-id-lab"
+      + size                                                   = "Standard_B2ms"
+      + virtual_machine_id                                     = (known after apply)
+      + vm_agent_platform_updates_enabled                      = (known after apply)
+
+      + os_disk {
+          + caching                   = "ReadWrite"
+          + disk_size_gb              = (known after apply)
+          + id                        = (known after apply)
+          + name                      = (known after apply)
+          + storage_account_type      = "StandardSSD_LRS"
+          + write_accelerator_enabled = false
+        }
+
+      + source_image_reference {
+          + offer     = "WindowsServer"
+          + publisher = "MicrosoftWindowsServer"
+          + sku       = "2022-datacenter-azure-edition"
+          + version   = "latest"
+        }
+
+      + termination_notification (known after apply)
+    }
+
+Plan: 4 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + ad_subnet_id  = (known after apply)
+  + vm_id         = (known after apply)
+  + vm_private_ip = (known after apply)
+
+─────────────────────────────────────────────────────────────────────────────
+
+Saved the plan to: tfplan
+
+To perform exactly these actions, run the following command to apply:
+    terraform apply "tfplan"
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ terraform apply tfplanterraform apply tfplan
+azurerm_subnet.ad: Creating...
+azurerm_subnet.ad: Creation complete after 6s [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/virtualNetworks/vnet-lab/subnets/snet-ad]
+azurerm_network_interface.nic: Creating...
+azurerm_network_interface.nic: Still creating... [00m10s elapsed]
+azurerm_network_interface.nic: Creation complete after 12s [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/networkInterfaces/nic-vm-dc01]
+azurerm_network_interface_security_group_association.assoc: Creating...
+azurerm_windows_virtual_machine.vm: Creating...
+azurerm_network_interface_security_group_association.assoc: Still creating... [00m10s elapsed]
+azurerm_network_interface_security_group_association.assoc: Creation complete after 12s [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/networkInterfaces/nic-vm-dc01|/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/networkSecurityGroups/nsg-vm-dc01]
+╷
+│ Error: creating Windows Virtual Machine (Subscription: "eecf2b7f-636f-47b8-9c5a-f561a4e59084"
+│ Resource Group Name: "rg-entra-id-lab"
+│ Virtual Machine Name: "vm-dc01"): performing CreateOrUpdate: unexpected status 409 (409 Conflict) with error: SkuNotAvailable: The requested VM size for resource 'Following SKUs have failed for Capacity Restrictions: Standard_B2ms' is currently not available in location 'japaneast'. Please try another size or deploy to a different location or different zone. See https://aka.ms/azureskunotavailable for details.
+│ 
+│   with azurerm_windows_virtual_machine.vm,
+│   on main.tf line 77, in resource "azurerm_windows_virtual_machine" "vm":
+│   77: resource "azurerm_windows_virtual_machine" "vm" {
+│ 
+╵
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ Please try another size or deploy to a different location or different zone. See https://aka.ms/azureskunotavailable for details.tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ Please try another size or deploy to a different location or different zone. See https://aka.ms/azureskunotavailable for details
+az vm list-sizes -l japaneast -o table | head -n 40tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ az vm list-sizes -l japaneast -o table | head -n 40
+WARNING: This command has been deprecated and will be removed in a future release. Use 'az vm list-skus' instead.
+MaxDataDiskCount    MemoryInMB    Name                       NumberOfCores    OsDiskSizeInMB    ResourceDiskSizeInMB
+------------------  ------------  -------------------------  ---------------  ----------------  ----------------------
+16                  65536         Standard_L8as_v3           8                1047552           81920
+32                  131072        Standard_L16as_v3          16               1047552           163840
+32                  262144        Standard_L32as_v3          32               1047552           327680
+32                  393216        Standard_L48as_v3          48               1047552           491520
+32                  524288        Standard_L64as_v3          64               1047552           655360
+32                  655360        Standard_L80as_v3          80               1047552           819200
+4                   8192          Standard_D2a_v4            2                1047552           51200
+8                   16384         Standard_D4a_v4            4                1047552           102400
+16                  32768         Standard_D8a_v4            8                1047552           204800
+32                  65536         Standard_D16a_v4           16               1047552           409600
+32                  131072        Standard_D32a_v4           32               1047552           819200
+32                  196608        Standard_D48a_v4           48               1047552           1228800
+32                  262144        Standard_D64a_v4           64               1047552           1638400
+32                  393216        Standard_D96a_v4           96               1047552           2457600
+4                   8192          Standard_D2as_v4           2                1047552           16384
+8                   16384         Standard_D4as_v4           4                1047552           32768
+16                  32768         Standard_D8as_v4           8                1047552           65536
+32                  65536         Standard_D16as_v4          16               1047552           131072
+32                  131072        Standard_D32as_v4          32               1047552           262144
+32                  196608        Standard_D48as_v4          48               1047552           393216
+32                  262144        Standard_D64as_v4          64               1047552           524288
+32                  393216        Standard_D96as_v4          96               1047552           786432
+4                   16384         Standard_E2a_v4            2                1047552           51200
+8                   32768         Standard_E4a_v4            4                1047552           102400
+16                  65536         Standard_E8a_v4            8                1047552           204800
+32                  131072        Standard_E16a_v4           16               1047552           409600
+32                  163840        Standard_E20a_v4           20               1047552           512000
+32                  262144        Standard_E32a_v4           32               1047552           819200
+32                  393216        Standard_E48a_v4           48               1047552           1228800
+32                  524288        Standard_E64a_v4           64               1047552           1638400
+32                  688128        Standard_E96a_v4           96               1047552           2457600
+4                   16384         Standard_E2as_v4           2                1047552           32768
+8                   32768         Standard_E4-2as_v4         4                1047552           65536
+8                   32768         Standard_E4as_v4           4                1047552           65536
+16                  65536         Standard_E8-2as_v4         8                1047552           131072
+16                  65536         Standard_E8-4as_v4         8                1047552           131072
+16                  65536         Standard_E8as_v4           8                1047552           131072
+32                  131072        Standard_E16-4as_v4        16               1047552           262144
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ 
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ 
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ 
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ 
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ az vm list-sizes -l japaneast -o table | head -n 40070
+WARNING: This command has been deprecated and will be removed in a future release. Use 'az vm list-skus' instead.
+MaxDataDiskCount    MemoryInMB    Name                       NumberOfCores    OsDiskSizeInMB    ResourceDiskSizeInMB
+------------------  ------------  -------------------------  ---------------  ----------------  ----------------------
+16                  65536         Standard_L8as_v3           8                1047552           81920
+32                  131072        Standard_L16as_v3          16               1047552           163840
+32                  262144        Standard_L32as_v3          32               1047552           327680
+32                  393216        Standard_L48as_v3          48               1047552           491520
+32                  524288        Standard_L64as_v3          64               1047552           655360
+32                  655360        Standard_L80as_v3          80               1047552           819200
+4                   8192          Standard_D2a_v4            2                1047552           51200
+8                   16384         Standard_D4a_v4            4                1047552           102400
+16                  32768         Standard_D8a_v4            8                1047552           204800
+32                  65536         Standard_D16a_v4           16               1047552           409600
+32                  131072        Standard_D32a_v4           32               1047552           819200
+32                  196608        Standard_D48a_v4           48               1047552           1228800
+32                  262144        Standard_D64a_v4           64               1047552           1638400
+32                  393216        Standard_D96a_v4           96               1047552           2457600
+4                   8192          Standard_D2as_v4           2                1047552           16384
+8                   16384         Standard_D4as_v4           4                1047552           32768
+16                  32768         Standard_D8as_v4           8                1047552           65536
+32                  65536         Standard_D16as_v4          16               1047552           131072
+32                  131072        Standard_D32as_v4          32               1047552           262144
+32                  196608        Standard_D48as_v4          48               1047552           393216
+32                  262144        Standard_D64as_v4          64               1047552           524288
+32                  393216        Standard_D96as_v4          96               1047552           786432
+4                   16384         Standard_E2a_v4            2                1047552           51200
+8                   32768         Standard_E4a_v4            4                1047552           102400
+16                  65536         Standard_E8a_v4            8                1047552           204800
+32                  131072        Standard_E16a_v4           16               1047552           409600
+32                  163840        Standard_E20a_v4           20               1047552           512000
+32                  262144        Standard_E32a_v4           32               1047552           819200
+32                  393216        Standard_E48a_v4           48               1047552           1228800
+32                  524288        Standard_E64a_v4           64               1047552           1638400
+32                  688128        Standard_E96a_v4           96               1047552           2457600
+4                   16384         Standard_E2as_v4           2                1047552           32768
+8                   32768         Standard_E4-2as_v4         4                1047552           65536
+8                   32768         Standard_E4as_v4           4                1047552           65536
+16                  65536         Standard_E8-2as_v4         8                1047552           131072
+16                  65536         Standard_E8-4as_v4         8                1047552           131072
+16                  65536         Standard_E8as_v4           8                1047552           131072
+32                  131072        Standard_E16-4as_v4        16               1047552           262144
+32                  131072        Standard_E16-8as_v4        16               1047552           262144
+32                  131072        Standard_E16as_v4          16               1047552           262144
+32                  163840        Standard_E20as_v4          20               1047552           327680
+32                  262144        Standard_E32-8as_v4        32               1047552           524288
+32                  262144        Standard_E32-16as_v4       32               1047552           524288
+32                  262144        Standard_E32as_v4          32               1047552           524288
+32                  393216        Standard_E48as_v4          48               1047552           786432
+32                  524288        Standard_E64-16as_v4       64               1047552           884736
+32                  524288        Standard_E64-32as_v4       64               1047552           884736
+32                  524288        Standard_E64as_v4          64               1047552           884736
+32                  688128        Standard_E96-24as_v4       96               1047552           1376256
+32                  688128        Standard_E96-48as_v4       96               1047552           1376256
+32                  688128        Standard_E96as_v4          96               1047552           1376256
+4                   8192          Standard_D2as_v5           2                1047552           0
+8                   16384         Standard_D4as_v5           4                1047552           0
+16                  32768         Standard_D8as_v5           8                1047552           0
+32                  65536         Standard_D16as_v5          16               1047552           0
+32                  131072        Standard_D32as_v5          32               1047552           0
+32                  196608        Standard_D48as_v5          48               1047552           0
+32                  262144        Standard_D64as_v5          64               1047552           0
+32                  393216        Standard_D96as_v5          96               1047552           0
+4                   16384         Standard_E2as_v5           2                1047552           0
+8                   32768         Standard_E4-2as_v5         4                1047552           0
+8                   32768         Standard_E4as_v5           4                1047552           0
+16                  65536         Standard_E8-2as_v5         8                1047552           0
+16                  65536         Standard_E8-4as_v5         8                1047552           0
+16                  65536         Standard_E8as_v5           8                1047552           0
+32                  131072        Standard_E16-4as_v5        16               1047552           0
+32                  131072        Standard_E16-8as_v5        16               1047552           0
+32                  131072        Standard_E16as_v5          16               1047552           0
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ az vm list-sizes -l japaneast -o table | head -n 7040tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ terraform apply tfplan
+[4@plan -outrm -f[10@terraform applysed -n '1,60p' main.tfvi main.tf 
+Vim: Warning: Output is not to a terminal
+[>4;2m="main.tf" 98L, 3263B# 既存RG/VNet取得
+data "azurerm_resource_group" "rg" {
+  name = var.rg_name
+}
+
+data "azurerm_virtual_network" "vnet" {
+  name= var.vnet_name
+  resource_group_name = data.azurerm_resource_group.rg.name
+}
+
+# AD用Subnet（新規）
+resource "azurerm_subnet" "ad" {
+  name= var.ad_subnet_name
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+  address_prefixes     = [var.ad_subnet_cidr]
+}
+
+# BastionSubnet（既存の想定）を参照（存在しない場合は plan で落ちる→Step2-1-4で確認）
+data "azurerm_subnet" "bastion" {
+  name= "AzureBastionSubnet"
+  resource_group_name  = data.azurerm_resource_group.rg.name
+  virtual_network_name = data.azurerm_virtual_network.vnet.name
+}
+
+# NSG（RDPは BastionSubnet のみ許可）
+resource "azurerm_network_security_group" "nsg" {
+  name= "nsg-${var.vm_name}"
+  location= data.azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+
+  security_rule {
+    name= "Allow-RDP-From-BastionSubnet"
+    priority= 10013,1Top~@k   4~@k   5~@k   6~@k   {}7~@k   {}8,0-1~@k   9,1  ~@k   20~@k   1~@k   2~@k   3~@k   {}4~@k   {}5,0-1~@k   6,1  ~@k   7~@k   8~@k   9~@k   
+direction= "Inbound"30,11%~@k   
+access= "Allow"31,0-13%~@k   
+protocol= "Tcp"32,14%~@k   
+source_port_range= "*"33,16%~@k   
+destination_port_range     = "3389"34,17%~@k   
+source_address_prefix      = data.azurerm_subnet.bastion.address_prefixes[0]35,19%~@k   
+destination_address_prefix = "*"36,110%~@k   
+}37,112%~@k   
+38,114%~@k   
+security_rule {39,115%~@k   
+name= "Deny-All-Inbound"40,117%~@k   
+priority= 409641,118%~@k   
+direction= "Inbound"42,120%~@k   
+access= "Deny"43,0-121%~@k   
+protocol= "*"44,123%~@k   
+source_port_range= "*"45,125%~@k   
+destination_port_range     = "*"46,126%~@k   
+source_address_prefix      = "*"47,128%~@k   
+destination_address_prefix = "*"48,129%~@k   
+}49,131%~@k   
+}50,132%~@k   
+51,134%~@k   
+# NIC（Privateのみ）52,135%~@k   
+resource "azurerm_network_interface" "nic" {53,137%~@k   
+name= "nic-${var.vm_name}"54,139%~@k   
+{}location= data.azurerm_resource_group.rg.location55,140%~@k   
+}resource_group_name = data.azurerm_resource_group.rg.name56,0-142%~@k   
+57,143%~@k   
+ip_configuration {58,145%~@k   
+name= "ipconfig1"59,146%~@k   
+subnet_id= azurerm_subnet.ad.id60,148%~@k   
+private_ip_address_allocation = "Dynamic"61,150%~@k   
+}62,0-151%~@k   
+}63,153%~@k   
+64,154%~@k   
+# NIC にNSG紐付け65,156%~@k   
+resource "azurerm_network_interface_security_group_association" "assoc" {66,157%~@k   
+network_interface_id      = azurerm_network_interface.nic.id67,159%~@k   
+{}network_security_group_id = azurerm_network_security_group.nsg.id68,160%~@k   
+{}}69,0-162%~@k   
+70,164%~@k   
+# Windows Server 2022 VM71,165%~@k   
+resource "azurerm_windows_virtual_machine" "vm" {72,167%~@k   
+name= var.vm_name73,168%~@k   
+{
+
+
+}location= data.azurerm_resource_group.rg.location74,170%~@k   
+{
+
+
+}resource_group_name = data.azurerm_resource_group.rg.name75,0-171%~@k   
+size= var.vm_size76,173%~@k   
+admin_username      = var.admin_username77,175%~@k   
+admin_password      = var.admin_password78,176%~@k   
+79,178%~@k   
+network_interface_ids = [azurerm_network_interface.nic.id]80,179%~@k   
+81,181%~@k   
+os_disk {82,182%~@k   
+caching= "ReadWrite"83,184%~@k   
+storage_account_type = "StandardSSD_LRS"84,0-185%~@k   
+}85,187%~@k   
+86,0-189%~@k   
+source_image_reference {87,190%~@k   
+publisher = "MicrosoftWindowsServer"88,192%~@k   
+offer     = "WindowsServer"89,193%~@k   
+sku= "2022-datacenter-azure-edition"90,195%~@k   
+version   = "latest"91,0-196%~@k   
+}92,198%~@k   
+}93,1Bot~@k   4~@k   5::q[>4;m>[>4;mtokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ vi main.tf az vm list-sizes -l japaneast -o table | head -n 7040tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ terraform apply tfplan
+[4@plan -outrm -f[10@terraform applysed -n '1,60p' main.tfvi main.tf [5@variables
+Vim: Warning: Output is not to a terminal
+[>4;2m="variables.tf" 55L, 1096Bdescription = "Azure Subscription ID for this environment"
+}
+
+variable "location" {
+  type    = string
+  default = "japaneast"
+}
+
+# 既存リソース（Phase1）
+variable "rg_name" {
+  type    = string
+  default = "rg-entra-id-lab"
+}
+variable "vnet_name" {
+  type    = string
+  default = "vnet-lab"
+}
+
+# Phase2 追加
+variable "ad_subnet_name" {
+  type    = string
+  default = "snet-ad"
+}
+
+variable "ad_subnet_cidr" {
+  type    = string
+  default = "10.10.10.0/24"
+}
+
+variable "vm_name" {
+  type    = string
+  default = "vm-dc01"
+}31,0-19%~@k   
+variable "vm_size" {32,114%~@k   
+type    = string33,119%~@k   
+default = "Standard_B2ms"34,123%~@k   
+{
+
+
+}}35,128%~@k   
+{
+
+
+}36,0-133%~@k   
+variable "admin_username" {37,138%~@k   
+type    = string38,142%~@k   
+default = "adadmin"39,147%~@k   
+{
+
+
+}}40,152%~@k   
+{
+
+
+}41,0-157%~@k   
+# パスワードは tfvars で渡す（Gitに上げない）42,161%~@k   
+variable "admin_password" {43,166%~@k   
+type      = string44,171%~@k   
+{
+
+
+}sensitive = true45,176%~@k   
+{
+
+
+}}46,0-180%~@k   
+47,185%~@k   
+# NSG：BastionSubnet からのみ RDP 許可（安全）48,190%~@k   7~@k   6,0-1~@k   {
+
+
+}5,1  ~@k   {
+
+
+}4~@k   3~@k   2~@k   1,0-1~@k   {
+
+
+}0,1  i -- INSERT --40,190%{
+
+
+}1{
+
+
+}0{
+
+
+}392345678910123456789201234567"6"5"4"3"2"1"0"19"8"7"6"5"4Standard_D2as_v4"301^[  39,3090%::wq[>4;m"variables.tf" 55L, 1099B written
+>[>4;mtokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ vi variables.tf mainaz vm list-sizes -l japaneast -o table | head -n 7040tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ terraform apply tfplan
+[4@plan -outrm -f
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ rm -f tfplanvi variables.tf mainaz vm list-sizes -l japaneast -o table | head -n 7040tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ terraform apply tfplan
+[4@plan -outrm -f[14@terraform plan -outrm -f[14@terraform plan -out
+data.azurerm_resource_group.rg: Reading...
+data.azurerm_resource_group.rg: Read complete after 0s [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab]
+data.azurerm_virtual_network.vnet: Reading...
+data.azurerm_virtual_network.vnet: Read complete after 1s [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/virtualNetworks/vnet-lab]
+data.azurerm_subnet.bastion: Reading...
+azurerm_subnet.ad: Refreshing state... [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/virtualNetworks/vnet-lab/subnets/snet-ad]
+azurerm_network_interface.nic: Refreshing state... [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/networkInterfaces/nic-vm-dc01]
+data.azurerm_subnet.bastion: Read complete after 0s [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/virtualNetworks/vnet-lab/subnets/AzureBastionSubnet]
+azurerm_network_security_group.nsg: Refreshing state... [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/networkSecurityGroups/nsg-vm-dc01]
+azurerm_network_interface_security_group_association.assoc: Refreshing state... [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/networkInterfaces/nic-vm-dc01|/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/networkSecurityGroups/nsg-vm-dc01]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # azurerm_windows_virtual_machine.vm will be created
+  + resource "azurerm_windows_virtual_machine" "vm" {
+      + admin_password                                         = (sensitive value)
+      + admin_username                                         = "adadmin"
+      + allow_extension_operations                             = (known after apply)
+      + automatic_updates_enabled                              = (known after apply)
+      + bypass_platform_safety_checks_on_user_schedule_enabled = false
+      + computer_name                                          = (known after apply)
+      + disk_controller_type                                   = (known after apply)
+      + enable_automatic_updates                               = (known after apply)
+      + extensions_time_budget                                 = "PT1H30M"
+      + hotpatching_enabled                                    = (known after apply)
+      + id                                                     = (known after apply)
+      + location                                               = "japaneast"
+      + max_bid_price                                          = -1
+      + name                                                   = "vm-dc01"
+      + network_interface_ids                                  = [
+          + "/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/networkInterfaces/nic-vm-dc01",
+        ]
+      + os_managed_disk_id                                     = (known after apply)
+      + patch_assessment_mode                                  = (known after apply)
+      + patch_mode                                             = (known after apply)
+      + platform_fault_domain                                  = -1
+      + priority                                               = "Regular"
+      + private_ip_address                                     = (known after apply)
+      + private_ip_addresses                                   = (known after apply)
+      + provision_vm_agent                                     = (known after apply)
+      + public_ip_address                                      = (known after apply)
+      + public_ip_addresses                                    = (known after apply)
+      + resource_group_name                                    = "rg-entra-id-lab"
+      + size                                                   = "Standard_D2as_v4"
+      + virtual_machine_id                                     = (known after apply)
+      + vm_agent_platform_updates_enabled                      = (known after apply)
+
+      + os_disk {
+          + caching                   = "ReadWrite"
+          + disk_size_gb              = (known after apply)
+          + id                        = (known after apply)
+          + name                      = (known after apply)
+          + storage_account_type      = "StandardSSD_LRS"
+          + write_accelerator_enabled = false
+        }
+
+      + source_image_reference {
+          + offer     = "WindowsServer"
+          + publisher = "MicrosoftWindowsServer"
+          + sku       = "2022-datacenter-azure-edition"
+          + version   = "latest"
+        }
+
+      + termination_notification (known after apply)
+    }
+
+Plan: 1 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + vm_id         = (known after apply)
+
+─────────────────────────────────────────────────────────────────────────────
+
+Saved the plan to: tfplan
+
+To perform exactly these actions, run the following command to apply:
+    terraform apply "tfplan"
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ terraform plan -out tfplanrm -fvi variables.tf mainaz vm list-sizes -l japaneast -o table | head -n 7040tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ terraform apply tfplan
+[4@plan -outapply
+azurerm_windows_virtual_machine.vm: Creating...
+azurerm_windows_virtual_machine.vm: Still creating... [00m10s elapsed]
+azurerm_windows_virtual_machine.vm: Still creating... [00m20s elapsed]
+azurerm_windows_virtual_machine.vm: Still creating... [00m30s elapsed]
+azurerm_windows_virtual_machine.vm: Still creating... [00m40s elapsed]
+azurerm_windows_virtual_machine.vm: Still creating... [00m50s elapsed]
+azurerm_windows_virtual_machine.vm: Still creating... [01m00s elapsed]
+azurerm_windows_virtual_machine.vm: Creation complete after 1m5s [id=/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Compute/virtualMachines/vm-dc01]
+
+Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+ad_subnet_id = "/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/virtualNetworks/vnet-lab/subnets/snet-ad"
+vm_id = "/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Compute/virtualMachines/vm-dc01"
+vm_private_ip = "10.10.10.4"
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ terraform outputtokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ terraform output
+ad_subnet_id = "/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Network/virtualNetworks/vnet-lab/subnets/snet-ad"
+vm_id = "/subscriptions/eecf2b7f-636f-47b8-9c5a-f561a4e59084/resourceGroups/rg-entra-id-lab/providers/Microsoft.Compute/virtualMachines/vm-dc01"
+vm_private_ip = "10.10.10.4"
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ az vm list -g rg-entra-id-lab -o tabletokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ az vm list -g rg-entra-id-lab -o table
+Name     ResourceGroup    Location
+-------  ---------------  ----------
+vm-dc01  rg-entra-id-lab  japaneast
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ az network nic list -g rg-entra-id-lab -o tabletokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ az network nic list -g rg-entra-id-lab -o table
+AuxiliaryMode    AuxiliarySku    DisableTcpStateTracking    EnableAcceleratedNetworking    EnableIPForwarding    Location    MacAddress         Name         NicType    Primary    ProvisioningState    ResourceGroup    ResourceGuid                          VnetEncryptionSupported
+---------------  --------------  -------------------------  -----------------------------  --------------------  ----------  -----------------  -----------  ---------  ---------  -------------------  ---------------  ------------------------------------  -------------------------
+None             None            False                      False                          False                 japaneast   7C-1E-52-23-A8-66  nic-vm-dc01  Standard   True       Succeeded            rg-entra-id-lab  afc4c976-0ff5-4a29-a16e-e345eb7946bb  False
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ az network nsg list -g rg-entra-id-lab -o tabletokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ az network nsg list -g rg-entra-id-lab -o table
+Location    Name         ProvisioningState    ResourceGroup    ResourceGuid
+----------  -----------  -------------------  ---------------  ------------------------------------
+japaneast   nsg-vm-dc01  Succeeded            rg-entra-id-lab  7ba72c6e-cb9d-4409-8af0-63e0696b67e1
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ exec > /dev/tty 2>&1exec > /dev/tty 2>&1
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab$ echo "[INFO] logging to $LOG"echo "[INFO] logging to $LOG"
+[INFO] logging to evidence/phase2/logs/20260207_phase2_step2-1_terraform.log
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab$ date
+Sat Feb  7 17:21:13 JST 2026
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab$ grep -n 'ad_subnet_cidr' -n variables.tfgrep -n 'ad_subnet_cidr' -n variables.tf
+grep: variables.tf: No such file or directory
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab$ cd terraform/envs/lab/ad-infracd terraform/envs/lab/ad-infra
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ cd terraform/envs/lab/ad-infragrep -n 'ad_subnet_cidr' -n variables.tfcd terraform/envs/lab/ad-infracd terraform/envs/lab/ad-infragrep -n 'ad_subnet_cidr' -n variables.tf
+27:variable "ad_subnet_cidr" {
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ grep -n 'ad_subnet_cidr' -n variables.tf variables.tf variables.tfvariables.tf variables.tf variables.tf variables.tf variables.tf variables.tf variables.tf variables.tf variables.tf variables.tf variables.tf variables.tf variables.tf variables.tf variables.tf variables.tf variables.tfvariables.tf variables.tf variables.tfvariables.tf variables.tf variables.tf variables.tf variables.tfv variables.tfi variables.tf
+Vim: Warning: Output is not to a terminal
+[>4;2m="variables.tf" 55L, 1099B# 既存リソース（Phase1）
+variable "rg_name" {
+  type    = string
+  default = "rg-entra-id-lab"
+}
+variable "vnet_name" {
+  type    = string
+  default = "vnet-lab"
+}
+
+# Phase2 追加
+variable "ad_subnet_name" {
+  type    = string
+  default = "snet-ad"
+}
+
+variable "ad_subnet_cidr" {
+  type    = string
+  default = "10.10.10.0/24"
+}
+
+variable "vm_name" {
+  type    = string
+  default = "vm-dc01"
+}
+
+variable "vm_size" {
+  type    = string
+  default = "Standard_D2as_v4"
+}
+
+variable "admin_username" {
+  type    = string
+  default = "adadmin"39,3047%~@k   8,18~@k   {
+
+
+}7,20~@k   {
+
+
+}6,0-1~@k   {
+
+
+}5,1  ~@k   {
+
+
+}4,21~@k   3,18::q[>4;m>[>4;mtokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ az network vnet subnet show -g rg-entra-id-lab --vnet-name vnet-lab -n AzureBastionSubnet -o tabletokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ az network vnet subnet show -g rg-entra-id-lab --vnet-name vnet-lab -n AzureBastionSubnet -o table
+AddressPrefix    DefaultOutboundAccess    Name                PrivateEndpointNetworkPolicies    PrivateLinkServiceNetworkPolicies    ProvisioningState    ResourceGroup
+---------------  -----------------------  ------------------  --------------------------------  -----------------------------------  -------------------  ---------------
+10.10.2.0/26     True                     AzureBastionSubnet  Disabled                          Enabled                              Succeeded            rg-entra-id-lab
+tokud@LAPTOP-B02HI6LF:~/git/github/toku360/entra-id-lab/terraform/envs/lab/ad-infra$ exec > /dev/tty 2>&1exec > /dev/tty 2>&1

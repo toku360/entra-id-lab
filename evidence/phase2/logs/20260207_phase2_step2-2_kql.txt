@@ -1,0 +1,4 @@
+MicrosoftAzureBastionAuditLogs
+| where TimeGenerated > ago(30d)
+| order by TimeGenerated desc
+| take 50

@@ -1,3 +1,95 @@
-# phase2-cloud-sync
+# Phase 2：ハイブリッド ID 実装（Azure Bastion 組み込み）
 
-（ここは Phase 開始時に、アーキテクチャ図（Mermaid）＋手順書を追記して完成させる）
+## 1. フェーズの目的
+
+Phase 2 では、Phase 1 で構築した「管理・監査・ネットワーク基盤」の上に、Hybrid Identity 構成を構築する。
+
+### このフェーズで実現すること
+- オンプレ AD（相当）＋ Entra ID のハイブリッド構成
+- Cloud Sync による ID 同期
+- Azure Bastion 経由のみの管理アクセス
+- 管理操作・接続操作の証跡取得（Log Analytics）
+
+---
+
+## 2. 目標アーキテクチャ
+
+### 2.1 全体像
+
+- オンプレ相当：
+  - Windows Server 2022
+    - AD DS
+    - Entra Cloud Sync Agent
+- クラウド：
+  - Microsoft Entra ID
+  - Azure Virtual Network（Private）
+  - Azure Bastion（Standard SKU）
+  - Log Analytics Workspace
+
+---
+
+## 2.2 アーキテクチャ図（Mermaid）
+
+```mermaid
+flowchart LR
+  subgraph OnPrem["On-Premises 相当"]
+    AD["Windows Server 2022\nAD DS"]
+    CSA["Cloud Sync Agent"]
+    AD --> CSA
+  end
+
+  subgraph Entra["Microsoft Entra ID"]
+    Users["Users / Groups"]
+  end
+
+  subgraph Azure["Azure Subscription"]
+    VNet["Virtual Network (Private)"]
+    Bastion["Azure Bastion (Standard)"]
+    LAW["Log Analytics Workspace"]
+  end
+
+  CSA -->|Sync| Users
+  Bastion -->|RDP| AD
+  Bastion --> LAW
+```
+
+## Step 2-3：AD 用サブネット設計
+
+### 設計方針
+- Active Directory / Cloud Sync は ID 基盤の中核であり、他ワークロードから論理的に分離する
+- Bastion / 汎用 VM と同一サブネットに配置しないことで、横断的な侵害リスクを低減
+- 将来の NSG/UDR/Private Endpoint 適用を前提とした責務分離
+
+### サブネット構成
+| サブネット名 | CIDR | 役割 |
+|---|---|---|
+| subnet-lab | 10.10.1.0/24 | 汎用 / 将来拡張 |
+| AzureBastionSubnet | 10.10.2.0/26 | Bastion 専用 |
+| snet-ad | 10.10.10.0/24 | AD DS / Cloud Sync |
+
+### snet-ad を分離する理由
+- AD 通信（LDAP/Kerberos/DNS）を明確に制御できる
+- NSG によるポート制御（389/636/88/445 等）が可能
+- 同期エージェントの通信経路を限定できる
+- Zero Trust 設計（後続 Phase）の前提条件を満たす
+
+
+### アーキテクチャ図（Phase 2）
+
+```mermaid
+flowchart LR
+  subgraph Azure["Azure Subscription"]
+    subgraph VNet["VNet: vnet-lab (10.10.0.0/16)"]
+      BL[subnet-lab]
+      AD[snet-ad\nAD DS / Cloud Sync]
+      BAS[AzureBastionSubnet\nBastion]
+    end
+    LAW[Log Analytics Workspace]
+  end
+
+  Entra[Microsoft Entra ID]
+  AD --> Entra
+  BAS --> AD
+  BAS --> BL
+  Azure --> LAW
+```
