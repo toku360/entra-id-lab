@@ -38,5 +38,10 @@ MicrosoftAzureBastionAuditLogs
 - ☑  運用ルール（変更管理）とロールバック方針を文書化
 - [ ] （VM 作成後）Cloud Sync エージェント導入・同期検証に進む
 
+## Step 2-5：AD 用 VM 追加（Terraform）
 
+- ☑  snet-ad に Windows Server 2022 VM を配置
+- ☑　Public IP なし（Bastion 前提）
+- ☑] Terraform plan/apply のログを保存
+- ☑  Portal 画面のスクリーンショット取得
 
