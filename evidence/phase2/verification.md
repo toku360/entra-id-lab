@@ -30,4 +30,13 @@ MicrosoftAzureBastionAuditLogs
 - ☑  CIDR が将来拡張を考慮した設計になっている
 - ☑  アーキテクチャ図で第三者に説明可能
 
+## Step 2-4：Cloud Sync 導入準備（設計）
+
+- ☑  同期対象OUを専用OUに限定する方針を確定
+- ☑  同期対象（User/Group）と非対象（Computer）を定義
+- ☑  UPN/DisplayName の属性方針を定義
+- ☑  運用ルール（変更管理）とロールバック方針を文書化
+- [ ] （VM 作成後）Cloud Sync エージェント導入・同期検証に進む
+
+
 
