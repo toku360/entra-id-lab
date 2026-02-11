@@ -45,3 +45,12 @@ MicrosoftAzureBastionAuditLogs
 - ☑] Terraform plan/apply のログを保存
 - ☑  Portal 画面のスクリーンショット取得
 
+## Step 2-6：Bastion 経由 RDP 接続
+
+- ☑  Public IP を持たない AD VM に Bastion 経由で RDP 接続
+- ☑  初回ログインに成功
+- ☑  Bastion の接続操作が LAW に記録されている
+- ☑  スクリーンショットで証跡を保存
+
+
+
