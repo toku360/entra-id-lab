@@ -1,0 +1,4 @@
+Name     ResourceGroup    Location
+-------  ---------------  ----------
+ad01     rg-entra-id-lab  japaneast
+vm-dc01  rg-entra-id-lab  japaneast

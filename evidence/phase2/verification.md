@@ -52,5 +52,49 @@ MicrosoftAzureBastionAuditLogs
 - ☑  Bastion の接続操作が LAW に記録されている
 - ☑  スクリーンショットで証跡を保存
 
+## Step 2-7 Verification（AD DS 導入前）
+
+- ☑  vm-dc01 に Bastion 経由で接続できる
+- ☑  DNS が Azure 既定（168.63.129.16）を向いている
+- ☑  NTDS / DNS サービスが未導入であることを確認
+- ☑  Get-ADDomain が未実行であることを確認（想定どおり）
+
+## Step 2-8 AD DS 構築
+
+- ☑  AD-Domain-Services ロール導入
+- ☑  新規フォレスト作成（entra-id.lab）
+- ☑  NTDS / DNS サービス稼働確認
+- ☑  Get-ADDomain 実行成功
+
+## Step 2-9：VNet DNS を AD VM に向ける
+
+- ☑  VNet (vnet-lab) の DNS サーバーが AD VM (10.10.10.4) に設定されている
+- ☑  AD VM 自身の DNS が 127.0.0.1 を参照している
+- ☑  nslookup entra-id.lab が AD DNS で解決できる
+- ☑  次ステップ（ドメイン参加 / Cloud Sync）の前提条件を満たす
+
+🧠 Point
+
+「なぜ Azure 既定 DNS を使わないのか？」
+
+・AD DS を使う場合、SRV レコードやゾーン管理が必須
+・Azure 既定 DNS では AD 機能は提供されないため VNet レベルで DNS を DC に向ける設計とした
+・ゼロトラスト前提でも、内部名前解決は AD が行う
+
+## Step 2-10 ドメイン参加
+
+- ☑  ad01 ドメイン参加成功
+
+
+## Step 2-12 Cloud Sync Agent 導入（ad01）
+
+- ☑  ad01 から DC(10.10.10.4) へ疎通できる（ping / SRV lookup）
+- ☑  ad01 から login.microsoftonline.com:443 に到達できる（Test-NetConnection）
+- ☑  Cloud Sync Agent を ad01 にインストールした（完了画面スクショ）
+- ☑  Entra Cloud Sync の Agents に ad01 が登録され Online 相当になった（スクショ）
+
+
+
+
 
 
