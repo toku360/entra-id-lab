@@ -94,7 +94,45 @@ MicrosoftAzureBastionAuditLogs
 - ☑  Entra Cloud Sync の Agents に ad01 が登録され Online 相当になった（スクショ）
 
 
+## Cloud Sync 検証結果
+
+| テスト | 結果 |
+|--------|------|
+| AD → Entra ユーザー同期 | Success |
+| パスワード変更同期 | Success |
+| 差分更新 | Success |
+
+ログ例：
+
+EntryImportUpdate : Success
 
 
+
+# Phase2 Verification
+
+## AD 基盤
+
+- [x] AD DS インストール済み
+- [x] DNS 正常動作
+- [x] SRV レコード解決確認
+
+## ネットワーク
+
+- [x] VNet DNS 10.10.10.4 設定済み
+- [x] snet-ad 分離構成
+- [x] NSG 割当確認（ad01 / vm-dc01）
+
+## Cloud Sync
+
+- [x] KDS Root Key 作成済み
+- [x] gMSA 作成成功
+- [x] Agent Active 表示
+- [x] Provisioning Success 確認
+
+## セキュリティ設計
+
+- [x] Bastion 経由管理
+- [x] VM Public IP なし
+- [x] Agent は outbound 通信のみ
 
 
