@@ -11,6 +11,7 @@
 このリポジトリでは **Microsoft Entra ID を中心とした Identity 基盤**を
 実務構成に近い形で構築しています。
 
+
 実装内容
 
 ```
@@ -99,18 +100,33 @@ Identity Monitoring
 
 # Architecture
 
-オンプレミス相当の Active Directory を ID の起点とし
-Microsoft Entra ID を中心とした Hybrid Identity / Zero Trust 基盤を構築。
+本ラボでは、オンプレミス環境を実機で用意する代わりに  
+Azure 上の仮想マシンに Active Directory Domain Services を構築し、  
+オンプレミス環境を模擬している。
 
-管理アクセスは Azure Bastion 経由のみ。
+この AD DS を ID の起点とし、Microsoft Entra ID と Cloud Sync により  
+Hybrid Identity を構成する。
 
-ログは Log Analytics に集約し
-KQL により Identity 監視を行う。
+管理アクセス（RDP / SSH）は Azure Bastion 経由に限定し、  
+仮想マシンには Public IP を付与しない設計とした。
+
+ユーザー認証およびアクセス制御は Microsoft Entra ID に集約し、  
+SSO / SCIM / Conditional Access / PIM を用いて  
+SaaS アプリケーション（Grafana / WordPress / ServiceNow）と連携する。
+
+また、以下のログを Log Analytics Workspace に集約することで  
+Identity の運用監視とセキュリティ分析を可能としている。
+
+- Entra ID Sign-in Logs
+- Entra ID Audit Logs
+- SCIM Provisioning Logs
+- Azure Bastion Logs
+
 
 ```mermaid
 flowchart LR
 
-subgraph ONPREM["On-Prem"]
+subgraph ONPREM["Simulated On-Prem"]
 AD["AD DS<br>AD / DNS"]
 end
 
@@ -121,7 +137,7 @@ LAW["Log Analytics"]
 end
 
 subgraph ENTRA["Microsoft Entra"]
-ID["Entra ID<br>SSO / SCIM / CA / PIM"]
+ID["Entra ID<br>SSO / SCIM / CA"]
 end
 
 subgraph APPS["Applications"]
