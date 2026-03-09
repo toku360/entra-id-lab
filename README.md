@@ -1,130 +1,277 @@
-cat > README.md <<'EOF'
-# entra-id-lab（Entra ID × SSO 実務ハンズオン / 証跡付き）
+# Entra ID Lab
 
-## これは何？
-Microsoft Entra ID を中心に、**IaC（Terraform）→ ハイブリッドID（Cloud Sync）→ SSO（OIDC/SAML）→ SCIM → Zero Trust/Governance → 監視/SRE** を  
-**“証跡付き（ログ/スクショ/KQL/CLI結果）”**で再現する実務ポートフォリオです。
+**Hybrid Identity / SSO / SCIM / Zero Trust / Identity Monitoring**
 
-- Entra テナント: `entra-id-lab`
-- ローカル: `~/git/github/toku360/entra-id-lab`
-- GitHub: `toku360/entra-id-lab`
+実務レベルの Microsoft Entra ID 基盤を
+**IaC（Terraform）+ 証跡付き（ログ / KQL / スクリーンショット）**で構築したポートフォリオ。
+
+---
+# 概要
+
+このリポジトリでは **Microsoft Entra ID を中心とした Identity 基盤**を
+実務構成に近い形で構築しています。
+
+実装内容
+
+```
+Terraform
+↓
+Azure Infrastructure
+↓
+Hybrid Identity（AD + Entra）
+↓
+Multi App SSO
+↓
+SCIM Provisioning
+↓
+Zero Trust
+↓
+Identity Monitoring
+```
+
+対象ロール
+
+* Identity Engineer
+* IAM Engineer
+* Cloud Security Engineer
+* SRE（Identity / Security）
 
 ---
 
-## 全体像（視覚的サマリ）
+# 実装スキル
 
-本アーキテクチャでは、オンプレミス相当の Active Directory（AD DS）を
-ID の起点とし、Microsoft Entra ID を中核に据えた
-ハイブリッド ID / SSO 基盤を構成している。
+## Identity / IAM
 
-管理アクセス（RDP / SSH）は Azure Bastion 経由に限定し、
-仮想マシンには Public IP を付与しない。
+* Microsoft Entra ID
+* Hybrid Identity
+* Cloud Sync
+* Conditional Access
+* Privileged Identity Management
+* Access Reviews
+* Entitlement Management
 
-ユーザー認証およびアクセス制御は Entra ID に集約し、
-SSO / SCIM / Conditional Access / PIM を用いて
-SaaS（Grafana / WordPress / ServiceNow）と連携する。
+---
 
-サインインログ、監査ログ、プロビジョニングログ、
-Bastion 操作ログは Log Analytics Workspace に集約し、
-運用監視およびセキュリティ分析を可能としている。
+## Authentication / Federation
 
+* OpenID Connect (OIDC)
+* SAML
+* Multi App SSO
+
+連携アプリ
+
+* Grafana
+* ServiceNow
+
+---
+
+## Provisioning
+
+* SCIM
+* Entra ID → SaaS Provisioning
+* Provisioning Logs
+
+---
+
+## Infrastructure / IaC
+
+* Terraform
+* Azure VNet
+* Azure Bastion
+* Azure VM
+* Log Analytics
+
+---
+
+## Monitoring / Observability
+
+* Azure Monitor
+* Log Analytics
+* KQL（Kusto Query Language）
+
+ログ監視
+
+* SignInLogs
+* AuditLogs
+* ProvisioningLogs
+
+---
+
+# Architecture
+
+オンプレミス相当の Active Directory を ID の起点とし
+Microsoft Entra ID を中心とした Hybrid Identity / Zero Trust 基盤を構築。
+
+管理アクセスは Azure Bastion 経由のみ。
+
+ログは Log Analytics に集約し
+KQL により Identity 監視を行う。
 
 ```mermaid
 flowchart LR
 
-%% ===== Local / On-Prem (simulated) =====
-subgraph ONPREM["On-Prem 相当"]
-  AD["AD DS (vm-dc01)<br/>AD DS / DNS"]
+subgraph ONPREM["On-Prem"]
+AD["AD DS<br>AD / DNS"]
 end
 
-%% ===== Azure (Private) =====
-subgraph AZ["Azure (Private Network)"]
-  VNET["Azure VNet (Private)"]
-  BASTION["Azure Bastion<br/>※RDP/SSHはBastion経由のみ"]
-  LAW["Log Analytics Workspace<br/>Sign-in / Audit / Provisioning / Bastion logs"]
+subgraph AZURE["Azure Private Network"]
+VNET["VNet"]
+BASTION["Azure Bastion"]
+LAW["Log Analytics"]
 end
 
-%% ===== Entra =====
-subgraph ID["Microsoft Entra"]
-  ENTRA["Microsoft Entra ID<br/>SSO / SCIM / CA / PIM"]
+subgraph ENTRA["Microsoft Entra"]
+ID["Entra ID<br>SSO / SCIM / CA / PIM"]
 end
 
-%% ===== SaaS =====
-subgraph SAAS["SaaS"]
-  APPS["Grafana / WordPress / ServiceNow"]
+subgraph APPS["Applications"]
+APP["Grafana / WordPress / ServiceNow"]
 end
 
-%% ===== Flows =====
-AD -->|"Cloud Sync"| ENTRA
-BASTION -->|"Admin Access (RDP/SSH)"| AD
+AD -->|Cloud Sync| ID
+BASTION -->|Admin Access| AD
+ID -->|SSO / SCIM| APP
 
-ENTRA -->|"SSO / SCIM"| APPS
-
-AD -->|"Logs"| LAW
-ENTRA -->|"Sign-in / Audit / Provisioning"| LAW
-BASTION -->|"Bastion logs"| LAW
-APPS -->|"App logs (optional)"| LAW
-
-%% ===== Placement helpers (optional) =====
-VNET --- BASTION
-VNET --- AD
-VNET --- LAW
-
+ID -->|SignInLogs / AuditLogs| LAW
+BASTION -->|Bastion Logs| LAW
 ```
 
 ---
 
-## フェーズ別ロードマップ（12週間）
-### Phase 0（設計思想）
-- 何を解決する構成か / なぜこの技術選定か / 証跡の取り方を定義
+# Project Roadmap（12 Weeks）
 
-### Phase 1（Week 1–2）：テナントと IaC 基盤構築
-- Entra ID テナント初期設定
-- Terraform による RG / VNet / Bastion / Log Analytics 構築
-- 管理・監査基盤を先行構築（VM 未作成）
-- AzureMetrics による Log Analytics 動作確認
-- ログ未取得理由を設計として明文化
+## Phase0 — Design
 
-### Phase 2（Week 3–4）：ハイブリッド ID（Cloud Sync）
-- AD DS 構築、OU設計、属性マッピング設計
-- Cloud Sync エージェント導入、同期検証、ログ分析（LAW/KQL）
-
-### Phase 3（Week 5–6）：Multi-App SSO（OIDC/SAML）
-- Grafana（OIDC）, WordPress（OIDC）, ServiceNow（SAML）
-- サインインログでアプリ別の成功/失敗を証跡化
-
-### Phase 4（Week 7–8）：SCIM + Provisioning
-- SCIMモックAPI（FastAPI）を構築
-- Entra から自動プロビジョニング、Provisioning Logs で証跡化
-
-### Phase 5（Week 9–10）：Zero Trust + Governance
-- Conditional Access（Report-only → 段階適用）
-- PIM（JIT昇格）/ Access Reviews / Entitlement Management
-
-### Phase 6（Week 11–12）：監視・SRE運用
-- KQL ワークブックで失敗率・遅延・監査イベントを可視化
-- SLI/SLO と Runbook（障害対応）を整備
+* 要件定義
+* 技術選定
+* 証跡ポリシー
 
 ---
 
-## ドキュメント（入口）
-- 全体計画: docs/00-overview.md
-- 証跡ルール: docs/01-evidence-policy.md
-- Phase 0: docs/phase0-design.md
-- Phase 1: docs/phase1-infra.md
-- Phase 2: docs/phase2-cloud-sync.md
-- Phase 3: docs/phase3-sso.md
-- Phase 4: docs/phase4-scim.md
-- Phase 5: docs/phase5-zero-trust.md
-- Phase 6: docs/phase6-sre.md
+## Phase1 — Infrastructure（Terraform）
+
+構築
+
+* Resource Group
+* VNet
+* Bastion
+* Log Analytics
 
 ---
 
-## 証跡（evidence/）
-各Phaseで以下を保存します：
-- screenshots/: Azure Portal の設定完了が分かる画面
-- logs/: CLI出力 / terraform plan/apply / KQL結果（個人情報はマスク）
-EOF
+## Phase2 — Hybrid Identity
 
+* AD DS 構築
+* OU設計
+* Cloud Sync
+* 属性マッピング
 
+---
+
+## Phase3 — Multi App SSO
+
+SSO 実装
+
+| Application | Protocol |
+| ----------- | -------- |
+| Grafana     | OIDC     |
+| ServiceNow  | SAML     |
+
+---
+
+## Phase4 — SCIM Provisioning
+
+* SCIM モックAPI（FastAPI）
+* Entra → ServiceNow 自動ユーザー作成
+* Provisioning Logs
+
+---
+
+## Phase5 — Zero Trust
+
+Identity Governance
+
+* Conditional Access
+* MFA
+* Access Reviews
+
+---
+
+## Phase6 — Identity Monitoring
+
+Entra ID のログを Azure Monitor に集約
+
+監視
+
+* ログイン失敗検知
+* アプリ別ログイン分析
+* ServiceNow SSOログ
+* SCIM同期ログ
+
+例
+
+```kql
+SigninLogs
+| where ResultType != 0
+| summarize count() by UserPrincipalName
+```
+
+---
+
+# Documentation
+
+詳細手順
+
+```
+docs/
+```
+
+* overview
+* design
+* infrastructure
+* cloud sync
+* sso
+* scim
+* zero trust
+* monitoring
+
+---
+
+# Evidence
+
+すべてのフェーズで証跡を保存
+
+```
+evidence/
+```
+
+内容
+
+* Azure Portal screenshots
+* Terraform logs
+* CLI output
+* KQL queries
+* Provisioning logs
+
+---
+
+# Learning Outcome
+
+このラボで習得した内容
+
+* Hybrid Identity 設計
+* Multi App SSO
+* SCIM Provisioning
+* Zero Trust
+* Identity Monitoring
+* Azure Observability
+
+---
+
+# Target Roles
+
+* Identity Engineer
+* IAM Engineer
+* Cloud Security Engineer
+* SRE（Identity / Security）
 
