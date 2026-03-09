@@ -220,7 +220,7 @@ SigninLogs
 
 # Documentation
 
-詳細手順
+本プロジェクトの設計および実装記録
 
 ```
 docs/
