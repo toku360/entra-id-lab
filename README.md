@@ -1,14 +1,14 @@
 # Entra ID Lab
 
-**Hybrid Identity / SSO / SCIM / Zero Trust / Identity Monitoring**
+Hybrid Identity / SSO / SCIM / Zero Trust / Identity Monitoring
 
 実務レベルの Microsoft Entra ID 基盤を
-**IaC（Terraform）+ 証跡付き（ログ / KQL / スクリーンショット）**で構築したポートフォリオ。
+IaC（Terraform）+ 証跡付き（ログ / KQL / スクリーンショット）で構築したポートフォリオ。
 
 ---
 # 概要
 
-このリポジトリでは **Microsoft Entra ID を中心とした Identity 基盤**を
+このリポジトリでは Microsoft Entra ID を中心とした Identity 基盤を
 実務構成に近い形で構築しています。
 
 
